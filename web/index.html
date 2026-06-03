@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập | Antigravity POS</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- CSS Style -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="login-body">
+    <!-- Decorative background elements -->
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+    <div class="login-wrapper">
+        <div class="login-card">
+            <!-- Brand header -->
+            <div class="brand-header">
+                <div class="logo-container">
+                    <i class="fa-solid fa-mug-hot"></i>
+                </div>
+                <h1>Antigravity POS</h1>
+                <p>Coffee Shop Chain Management System</p>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="phone">
+                        <i class="fa-solid fa-phone"></i> Số điện thoại
+                    </label>
+                    <input type="text" id="phone" name="phone" placeholder="Nhập số điện thoại nhân viên" required autocomplete="username">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">
+                        <i class="fa-solid fa-lock"></i> Mật khẩu
+                    </label>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password">
+                        <button type="button" id="togglePassword" class="toggle-password">
+                            <i class="fa-regular fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Error Message Container -->
+                <div id="errorMessage" class="error-message">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span>Tài khoản hoặc mật khẩu không chính xác!</span>
+                </div>
+
+                <button type="submit" id="submitBtn" class="btn btn-primary btn-block">
+                    <span>Đăng nhập</span>
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                </button>
+            </form>
+
+            <!-- Demo details footer (collapsible) -->
+            <div class="demo-accounts">
+                <button type="button" class="demo-toggle" id="demoToggle">
+                    <i class="fa-solid fa-circle-info"></i> Xem tài khoản Demo
+                </button>
+                <div class="demo-list" id="demoList">
+                    <div class="demo-item" data-phone="090-111-0001" data-pass="james123">
+                        <span class="role admin">Admin</span>
+                        <strong>James Carter</strong><br>
+                        <small>SĐT: 090-111-0001 · Pass: james123</small>
+                    </div>
+                    <div class="demo-item" data-phone="090-111-0002" data-pass="sarah123">
+                        <span class="role manager">Manager</span>
+                        <strong>Sarah Nguyen</strong><br>
+                        <small>SĐT: 090-111-0002 · Pass: sarah123</small>
+                    </div>
+                    <div class="demo-item" data-phone="090-111-0005" data-pass="kevin123">
+                        <span class="role staff">Barista</span>
+                        <strong>Kevin Le</strong><br>
+                        <small>SĐT: 090-111-0005 · Pass: kevin123</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginForm = document.getElementById('loginForm');
+            const phoneInput = document.getElementById('phone');
+            const passwordInput = document.getElementById('password');
+            const togglePasswordBtn = document.getElementById('togglePassword');
+            const errorMessage = document.getElementById('errorMessage');
+            const submitBtn = document.getElementById('submitBtn');
+            const demoToggle = document.getElementById('demoToggle');
+            const demoList = document.getElementById('demoList');
+
+            // Check if already logged in
+            API.get('auth.php?action=me')
+                .then(res => {
+                    if (res.success && res.user) {
+                        redirectUser(res.user.role);
+                    }
+                })
+                .catch(() => {}); // Suppress unauthorized error on login page
+
+            // Toggle password visibility
+            togglePasswordBtn.addEventListener('click', () => {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                togglePasswordBtn.querySelector('i').className = type === 'password' ? 'fa-regular fa-eye' : 'fa-regular fa-eye-slash';
+            });
+
+            // Toggle demo accounts list
+            demoToggle.addEventListener('click', () => {
+                demoList.classList.toggle('show');
+            });
+
+            // Fill demo account when clicked
+            document.querySelectorAll('.demo-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    phoneInput.value = item.getAttribute('data-phone');
+                    passwordInput.value = item.getAttribute('data-pass');
+                    errorMessage.classList.remove('show');
+                });
+            });
+
+            // Handle login submit
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                errorMessage.classList.remove('show');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span>Đang xác thực...</span><i class="fa-solid fa-spinner fa-spin"></i>';
+
+                try {
+                    const res = await API.post('auth.php?action=login', {
+                        phone: phoneInput.value,
+                        password: passwordInput.value
+                    });
+
+                    if (res.success && res.user) {
+                        redirectUser(res.user.role);
+                    } else {
+                        showError(res.error || 'Có lỗi xảy ra, vui lòng thử lại.');
+                    }
+                } catch (err) {
+                    showError(err.message || 'Lỗi kết nối đến server.');
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<span>Đăng nhập</span><i class="fa-solid fa-arrow-right-to-bracket"></i>';
+                }
+            });
+
+            function showError(msg) {
+                errorMessage.querySelector('span').textContent = msg;
+                errorMessage.classList.add('show');
+                // Shake animation effect
+                const card = document.querySelector('.login-card');
+                card.classList.add('shake');
+                setTimeout(() => card.classList.remove('shake'), 500);
+            }
+
+            function redirectUser(role) {
+                if (role === 'Admin') {
+                    window.location.href = 'admin.html';
+                } else if (role === 'StoreManager') {
+                    window.location.href = 'manager.html';
+                } else {
+                    // ShiftLead or Barista go to POS
+                    window.location.href = 'pos.html';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

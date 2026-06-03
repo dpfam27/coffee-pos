@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS Dashboard | Antigravity POS</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- CSS Style -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i class="fa-solid fa-mug-hot"></i>
+                <h2>Antigravity POS</h2>
+            </div>
+
+            <div class="sidebar-user">
+                <div class="user-avatar" id="userAvatar">U</div>
+                <div class="user-info">
+                    <div class="name" id="userName">User Name</div>
+                    <div class="role-badge" id="userRole">Role</div>
+                </div>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li>
+                    <button class="menu-item-btn active" data-target="new-order-tab">
+                        <i class="fa-solid fa-cart-plus"></i>
+                        <span>Đơn hàng mới</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="menu-item-btn" data-target="prep-queue-tab">
+                        <i class="fa-solid fa-list-check"></i>
+                        <span>Hàng chờ pha chế</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="menu-item-btn" data-target="tables-tab">
+                        <i class="fa-solid fa-chair"></i>
+                        <span>Sơ đồ bàn ăn</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="menu-item-btn" data-target="history-tab">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <span>Lịch sử bán hàng</span>
+                    </button>
+                </li>
+                <li id="shiftLeadMenu" style="display: none;">
+                    <button class="menu-item-btn" data-target="shift-lead-tab">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <span>Quản lý ca trực</span>
+                    </button>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <button class="logout-btn" id="logoutBtn">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Đăng xuất</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="top-bar">
+                <div class="top-bar-title">
+                    <h3 id="currentTabTitle">Đơn hàng mới</h3>
+                </div>
+                <div class="top-bar-meta">
+                    <div class="meta-item">
+                        <i class="fa-solid fa-shop"></i>
+                        <span id="currentBranch">Chi nhánh Downtown</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fa-regular fa-calendar-days"></i>
+                        <span id="currentTime">00:00:00</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Body -->
+            <div class="content-body">
+                
+                <!-- Tab 1: New Order -->
+                <section id="new-order-tab" class="view-section active">
+                    <div class="pos-layout">
+                        <!-- Left Column: Menu Items -->
+                        <div class="pos-menu-column">
+                            <!-- Categories filter bar -->
+                            <div class="cat-filter-bar" id="categoryFilterBar">
+                                <button class="cat-btn active" data-cat-id="all">Tất cả</button>
+                                <!-- Categories dynamically loaded here -->
+                            </div>
+                            
+                            <!-- Items Grid -->
+                            <div class="menu-grid" id="menuGrid">
+                                <!-- Menu cards dynamically loaded here -->
+                            </div>
+                        </div>
+                        
+                        <!-- Right Column: Cart -->
+                        <div class="pos-cart-column">
+                            <div class="cart-header">
+                                <h4>Giỏ hàng hiện tại</h4>
+                                <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" id="clearCartBtn">
+                                    <i class="fa-solid fa-trash-can"></i> Xóa
+                                </button>
+                            </div>
+                            
+                            <!-- Order Type & Dining Table -->
+                            <div class="form-group" style="margin-bottom: 12px;">
+                                <label style="font-size: 0.75rem;"><i class="fa-solid fa-utensils"></i> Hình thức & Bàn ăn</label>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                    <select class="form-control" id="orderTypeSelect" style="padding: 8px 12px; font-size: 0.85rem;">
+                                        <option value="dine_in">Ăn tại bàn (Dine-in)</option>
+                                        <option value="takeaway">Mang đi (Takeaway)</option>
+                                        <option value="pickup">Tự đến nhận (Pickup)</option>
+                                        <option value="delivery">Giao hàng (Delivery)</option>
+                                    </select>
+                                    <select class="form-control" id="cartTableSelect" style="padding: 8px 12px; font-size: 0.85rem;">
+                                        <option value="">-- Chọn bàn --</option>
+                                        <!-- Tables loaded here -->
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Customer Loyalty Search -->
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label style="font-size: 0.75rem;"><i class="fa-solid fa-award"></i> Khách hàng thân thiết</label>
+                                <div style="display: flex; gap: 8px;">
+                                    <input type="text" id="customerPhoneInput" class="form-control" placeholder="Nhập SĐT khách hàng" style="padding: 8px 12px; font-size: 0.85rem; flex-grow: 1;">
+                                    <button class="btn btn-secondary" id="searchCustomerBtn" style="padding: 8px 14px;">
+                                        <i class="fa-solid fa-magnifying-glass"></i>
+                                    </button>
+                                </div>
+                                <div id="selectedCustomerInfo" style="display: none; margin-top: 8px; font-size: 0.8rem; padding: 8px; background: rgba(255,255,255,0.03); border-radius: var(--radius-sm); border: 1px solid var(--border-color); justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <strong id="customerNameText">Tên KH</strong><br>
+                                        <span style="color: var(--text-secondary);">Điểm tích lũy: <strong id="customerPointsText" style="color: var(--warning);">0</strong></span>
+                                    </div>
+                                    <button type="button" id="removeCustomerBtn" style="background: none; border: none; color: var(--danger); cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            </div>
+                            
+                            <!-- Cart Items List -->
+                            <div class="cart-items" id="cartItemsList">
+                                <div style="text-align: center; color: var(--text-muted); margin-top: 50px;">
+                                    <i class="fa-solid fa-basket-shopping" style="font-size: 2.5rem; margin-bottom: 12px; display: block;"></i>
+                                    Giỏ hàng trống
+                                </div>
+                            </div>
+                            
+                            <!-- Bill Summary -->
+                            <div class="cart-summary">
+                                <div class="summary-row">
+                                    <span>Tạm tính</span>
+                                    <span id="cartSubtotal">0đ</span>
+                                </div>
+                                <div class="summary-row" id="loyaltyDiscountRow" style="display: none;">
+                                    <span>Giảm giá điểm (Redeem)</span>
+                                    <span id="cartLoyaltyDiscount" style="color: var(--danger);">-0đ</span>
+                                </div>
+                                <div class="summary-row" id="promoDiscountRow" style="display: none;">
+                                    <span>Khuyến mãi (Happy Hour)</span>
+                                    <span id="cartPromoDiscount" style="color: var(--danger);">-0đ</span>
+                                </div>
+                                <div class="summary-row total">
+                                    <span>Tổng cộng</span>
+                                    <span class="price" id="cartTotal">0đ</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Actions -->
+                            <div class="pos-cart-actions">
+                                <button class="btn btn-primary" id="checkoutBtn" disabled>
+                                    <i class="fa-solid fa-cash-register"></i> Thanh toán
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Tab 2: Prep Queue -->
+                <section id="prep-queue-tab" class="view-section">
+                    <div class="table-container">
+                        <div class="table-header-bar">
+                            <h4>Hàng chờ chế biến pha chế (Barista KDS)</h4>
+                            <button class="btn btn-secondary" id="refreshPrepQueueBtn"><i class="fa-solid fa-arrows-rotate"></i> Làm mới</button>
+                        </div>
+                        <div style="padding: 20px;">
+                            <div class="prep-grid" id="prepQueueGrid">
+                                <!-- Prep items dynamically loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Tab 3: Tables -->
+                <section id="tables-tab" class="view-section">
+                    <div class="table-container">
+                        <div class="table-header-bar">
+                            <h4>Sơ đồ bàn chi nhánh</h4>
+                            <button class="btn btn-secondary" id="refreshTablesBtn"><i class="fa-solid fa-arrows-rotate"></i> Làm mới</button>
+                        </div>
+                        <div style="padding: 25px;">
+                            <div class="table-grid" id="tablesGrid">
+                                <!-- Tables dynamically loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Tab 4: Order History -->
+                <section id="history-tab" class="view-section">
+                    <div class="table-container">
+                        <div class="table-header-bar">
+                            <h4>Lịch sử đơn hàng gần đây</h4>
+                            <button class="btn btn-secondary" id="refreshHistoryBtn"><i class="fa-solid fa-arrows-rotate"></i> Làm mới</button>
+                        </div>
+                        <table class="custom-table">
+                            <thead>
+                                <tr>
+                                    <th>Mã đơn</th>
+                                    <th>Thời gian</th>
+                                    <th>Loại đơn</th>
+                                    <th>Bàn</th>
+                                    <th>Nhân viên</th>
+                                    <th>Khách hàng</th>
+                                    <th>Trạng thái</th>
+                                    <th>Tổng tiền</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTableBody">
+                                <!-- Order history dynamically loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Tab 5: Shift Lead Only -->
+                <section id="shift-lead-tab" class="view-section">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-info">
+                                <div class="stat-label">Tổng doanh thu ca</div>
+                                <div class="stat-value" id="shiftRevenue">0đ</div>
+                            </div>
+                            <div class="stat-icon success"><i class="fa-solid fa-sack-dollar"></i></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-info">
+                                <div class="stat-label">Tổng số đơn hàng</div>
+                                <div class="stat-value" id="shiftOrderCount">0</div>
+                            </div>
+                            <div class="stat-icon primary"><i class="fa-solid fa-receipt"></i></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-info">
+                                <div class="stat-label">Đơn hủy / Hoàn tiền</div>
+                                <div class="stat-value" id="shiftRefundCount">0</div>
+                            </div>
+                            <div class="stat-icon danger"><i class="fa-solid fa-ban"></i></div>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <div class="table-header-bar">
+                            <h4>Yêu cầu hủy đơn hàng (Voids & Refunds)</h4>
+                        </div>
+                        <table class="custom-table">
+                            <thead>
+                                <tr>
+                                    <th>Mã đơn</th>
+                                    <th>Thời gian</th>
+                                    <th>Bàn</th>
+                                    <th>Tổng tiền</th>
+                                    <th>Trạng thái</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="refundsTableBody">
+                                <!-- Refundable orders dynamically loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+                
+            </div>
+        </main>
+    </div>
+
+    <!-- ==============================================================================
+       MODALS
+       ============================================================================== */ -->
+    
+    <!-- Modal 1: Customizations (Modifiers) -->
+    <div class="modal" id="modifierModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modifierItemName">Tên món ăn</h3>
+                <button class="modal-close" id="closeModifierModal">&times;</button>
+            </div>
+            <div class="modal-body" id="modifierModalBody">
+                <!-- Modifier groups will be loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <span style="flex-grow: 1; align-self: center; font-size: 1.1rem; font-weight: 700; color: var(--primary);">
+                    Đơn giá: <span id="modifierItemTotalPrice">0đ</span>
+                </span>
+                <button class="btn btn-secondary" id="cancelModifierBtn">Hủy</button>
+                <button class="btn btn-primary" id="addCartWithModifiersBtn">Thêm vào giỏ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 2: Checkout & Payment -->
+    <div class="modal" id="checkoutModal">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3>Thanh toán hóa đơn</h3>
+                <button class="modal-close" id="closeCheckoutModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <span style="font-size: 0.9rem; color: var(--text-secondary);">Số tiền cần thanh toán</span>
+                    <h2 style="font-family: var(--font-heading); font-size: 2.2rem; font-weight: 800; color: var(--success); margin-top: 5px;" id="checkoutTotalText">0đ</h2>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="font-size: 0.8rem;"><i class="fa-solid fa-credit-card"></i> Chọn phương thức thanh toán</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 8px;">
+                        <button type="button" class="btn btn-secondary payment-method-btn selected" data-method="Cash" style="flex-direction: column; padding: 15px; font-size: 0.85rem; gap: 6px;">
+                            <i class="fa-solid fa-money-bill-wave" style="font-size: 1.5rem; color: var(--success);"></i>
+                            Tiền mặt
+                        </button>
+                        <button type="button" class="btn btn-secondary payment-method-btn" data-method="Card" style="flex-direction: column; padding: 15px; font-size: 0.85rem; gap: 6px;">
+                            <i class="fa-solid fa-credit-card" style="font-size: 1.5rem; color: var(--info);"></i>
+                            Thẻ (POS)
+                        </button>
+                        <button type="button" class="btn btn-secondary payment-method-btn" data-method="Mobile" style="flex-direction: column; padding: 15px; font-size: 0.85rem; gap: 6px;">
+                            <i class="fa-solid fa-qrcode" style="font-size: 1.5rem; color: var(--primary);"></i>
+                            Chuyển khoản
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group" id="loyaltyRedeemSection" style="display: none; border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <label style="font-size: 0.8rem; margin-bottom: 0;"><i class="fa-solid fa-gift"></i> Sử dụng điểm tích lũy</label>
+                        <span style="font-size: 0.75rem; color: var(--text-secondary);">Tối đa khả dụng: <strong id="redeemMaxPoints" style="color: var(--warning);">0</strong> điểm</span>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="number" id="redeemPointsInput" class="form-control" placeholder="Số điểm muốn dùng (1 điểm = 100đ)" min="0" style="padding: 8px 12px; font-size: 0.85rem; flex-grow: 1;">
+                        <button type="button" class="btn btn-secondary" id="applyRedeemBtn" style="padding: 8px 14px; font-size: 0.85rem;">Áp dụng</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelCheckoutBtn">Hủy</button>
+                <button class="btn btn-primary" id="confirmPaymentBtn" style="background: var(--success); box-shadow: 0 4px 14px var(--success-glow);">
+                    <i class="fa-solid fa-circle-check"></i> Xác nhận và Giao đơn
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 3: View Order Details / Invoice -->
+    <div class="modal" id="invoiceModal">
+        <div class="modal-content" style="max-width: 480px;">
+            <div class="modal-header">
+                <h3>Chi tiết hóa đơn</h3>
+                <button class="modal-close" id="closeInvoiceModal">&times;</button>
+            </div>
+            <div class="modal-body" id="invoiceModalBody" style="font-family: monospace; font-size: 0.85rem; color: #d1d5db; line-height: 1.5; background: #0b0c10; padding: 20px; border-radius: var(--radius-sm);">
+                <!-- Invoice template will be rendered here -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="printInvoiceBtn"><i class="fa-solid fa-print"></i> In hóa đơn (Demo)</button>
+                <button class="btn btn-secondary" id="closeInvoiceBtn">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/pos.js"></script>
+</body>
+</html>

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Portal | Antigravity POS</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- CSS Style -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i class="fa-solid fa-mug-hot"></i>
+                <h2>Antigravity POS</h2>
+            </div>
+
+            <div class="sidebar-user">
+                <div class="user-avatar" id="userAvatar">A</div>
+                <div class="user-info">
+                    <div class="name" id="userName">Admin Name</div>
+                    <div class="role-badge" id="userRole">Chain Admin</div>
+                </div>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li>
+                    <button class="menu-item-btn active" data-target="overview-tab">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <span>Tổng quan chuỗi</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="menu-item-btn" data-target="branches-tab">
+                        <i class="fa-solid fa-network-wired"></i>
+                        <span>Danh sách chi nhánh</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="menu-item-btn" data-target="customization-tab">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>Doanh thu Topping</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="menu-item-btn" data-target="promotions-tab">
+                        <i class="fa-solid fa-tags"></i>
+                        <span>Quản lý Khuyến mãi</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="menu-item-btn" data-target="audit-tab">
+                        <i class="fa-solid fa-book-bookmark"></i>
+                        <span>Nhật ký hệ thống</span>
+                    </button>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <button class="logout-btn" id="logoutBtn">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Đăng xuất</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="top-bar">
+                <div class="top-bar-title">
+                    <h3 id="currentTabTitle">Tổng quan chuỗi</h3>
+                </div>
+                <div class="top-bar-meta">
+                    <div class="meta-item">
+                        <i class="fa-solid fa-user-shield"></i>
+                        <span>Hệ thống chuỗi POS</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fa-regular fa-calendar-days"></i>
+                        <span id="currentTime">00:00:00</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Body -->
+            <div class="content-body">
+                
+                <!-- Tab 1: Chain Overview -->
+                <section id="overview-tab" class="view-section active">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-info">
+                                <div class="stat-label">Doanh thu toàn chuỗi</div>
+                                <div class="stat-value" id="chainRevenue">0đ</div>
+                            </div>
+                            <div class="stat-icon success"><i class="fa-solid fa-sack-dollar"></i></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-info">
+                                <div class="stat-label">Tổng đơn hàng chuỗi</div>
+                                <div class="stat-value" id="chainOrders">0</div>
+                            </div>
+                            <div class="stat-icon primary"><i class="fa-solid fa-receipt"></i></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-info">
+                                <div class="stat-label">Giá trị trung bình đơn</div>
+                                <div class="stat-value" id="chainAvgTicket">0đ</div>
+                            </div>
+                            <div class="stat-icon info"><i class="fa-solid fa-calculator"></i></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-info">
+                                <div class="stat-label">Nguyên liệu thiếu kho</div>
+                                <div class="stat-value" id="chainLowStockCount" style="color: var(--danger);">0</div>
+                            </div>
+                            <div class="stat-icon danger"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <!-- Revenue by Branch -->
+                        <div class="table-container">
+                            <div class="table-header-bar">
+                                <h4>Doanh số chi tiết theo chi nhánh</h4>
+                            </div>
+                            <table class="custom-table">
+                                <thead>
+                                    <tr>
+                                        <th>Chi nhánh</th>
+                                        <th>Số đơn hàng</th>
+                                        <th>Tổng doanh thu</th>
+                                        <th>Tỷ lệ đóng góp</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="branchRevenueBody">
+                                    <!-- Dynamic branch revenue row -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Top Customers -->
+                        <div class="table-container">
+                            <div class="table-header-bar">
+                                <h4>Hội viên tiêu biểu (Điểm tích lũy cao nhất)</h4>
+                            </div>
+                            <table class="custom-table">
+                                <thead>
+                                    <tr>
+                                        <th>Tên khách hàng</th>
+                                        <th>Số điện thoại</th>
+                                        <th>Điểm khả dụng</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="topCustomersBody">
+                                    <!-- Dynamic top loyalty customers -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Tab 2: Branches List -->
+                <section id="branches-tab" class="view-section">
+                    <div class="table-container">
+                        <div class="table-header-bar">
+                            <h4>Danh sách chi nhánh cửa hàng</h4>
+                        </div>
+                        <table class="custom-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Tên chi nhánh</th>
+                                    <th>Địa chỉ</th>
+                                    <th>Số điện thoại</th>
+                                </tr>
+                            </thead>
+                            <tbody id="branchesTableBody">
+                                <!-- Dynamic branch list -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Tab 3: Customization Analysis -->
+                <section id="customization-tab" class="view-section">
+                    <div class="table-container">
+                        <div class="table-header-bar">
+                            <h4>Phân tích doanh thu từ topping và tùy chỉnh món (Tháng này)</h4>
+                        </div>
+                        <table class="custom-table">
+                            <thead>
+                                <tr>
+                                    <th>Nhóm tùy chọn</th>
+                                    <th>Tên tùy chọn (Topping)</th>
+                                    <th>Số lần được chọn</th>
+                                    <th>Tổng doanh thu bổ sung</th>
+                                </tr>
+                            </thead>
+                            <tbody id="customizationTableBody">
+                                <!-- Dynamic customization revenue list -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Tab 4: Promotions Management -->
+                <section id="promotions-tab" class="view-section">
+                    <div class="table-container">
+                        <div class="table-header-bar">
+                            <h4>Các chương trình khuyến mãi toàn chuỗi</h4>
+                        </div>
+                        <table class="custom-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Tên khuyến mãi</th>
+                                    <th>Hình thức giảm</th>
+                                    <th>Giá trị giảm</th>
+                                    <th>Ngày bắt đầu</th>
+                                    <th>Ngày kết thúc</th>
+                                    <th>Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody id="promotionsTableBody">
+                                <!-- Dynamic promotions list -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Tab 5: System Audits -->
+                <section id="audit-tab" class="view-section">
+                    <div class="table-container">
+                        <div class="table-header-bar">
+                            <h4>Nhật ký hành động nhân viên (Audit Log)</h4>
+                        </div>
+                        <table class="custom-table">
+                            <thead>
+                                <tr>
+                                    <th>ID Log</th>
+                                    <th>Thời gian</th>
+                                    <th>Chi nhánh</th>
+                                    <th>Nhân viên</th>
+                                    <th>Hành động</th>
+                                    <th>Bảng tác động</th>
+                                    <th>ID bản ghi</th>
+                                    <th>Chi tiết hành vi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="auditTableBody">
+                                <!-- Dynamic audit logs -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>
