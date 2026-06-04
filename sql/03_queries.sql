@@ -36,7 +36,7 @@ ORDER BY o.order_date ASC;
 
 -- ─────────────────────────────────────────────────────────────
 -- UC2  Ingredients at Risk of Going Unavailable  (Store Manager)
--- Technique: simple query on ingredient (adapted due to recipe removal)
+-- Technique: simple query on ingredient
 -- ─────────────────────────────────────────────────────────────
 SELECT
     name,

@@ -130,7 +130,6 @@
                                         <option value="dine_in">Ăn tại bàn (Dine-in)</option>
                                         <option value="takeaway">Mang đi (Takeaway)</option>
                                         <option value="pickup">Tự đến nhận (Pickup)</option>
-                                        <option value="delivery">Giao hàng (Delivery)</option>
                                     </select>
                                     <select class="form-control" id="cartTableSelect" style="padding: 8px 12px; font-size: 0.85rem;">
                                         <option value="">-- Chọn bàn --</option>
@@ -250,6 +249,11 @@
                                 <!-- Order history dynamically loaded here -->
                             </tbody>
                         </table>
+                        <!-- Total Revenue Row -->
+                        <div style="display: flex; justify-content: flex-end; padding: 14px 20px; border-top: 1px solid var(--border-color); font-size: 1rem;">
+                            <span style="color: var(--text-secondary); margin-right: 16px;">Tổng doanh thu hiển thị:</span>
+                            <span style="font-weight: 700; font-size: 1.15rem; color: var(--success);" id="historyTotalRevenue">0đ</span>
+                        </div>
                     </div>
                 </section>
 
@@ -277,6 +281,25 @@
                             </div>
                             <div class="stat-icon danger"><i class="fa-solid fa-ban"></i></div>
                         </div>
+                    </div>
+
+                    <!-- Daily Revenue Summary -->
+                    <div class="table-container" style="margin-bottom: 20px;">
+                        <div class="table-header-bar">
+                            <h4><i class="fa-solid fa-calendar-day"></i> Doanh thu bán hàng từng ngày (7 ngày gần nhất)</h4>
+                        </div>
+                        <table class="custom-table">
+                            <thead>
+                                <tr>
+                                    <th>Ngày</th>
+                                    <th>Số đơn (Paid)</th>
+                                    <th>Tổng doanh thu</th>
+                                </tr>
+                            </thead>
+                            <tbody id="shiftDailyBody">
+                                <!-- Dynamic daily revenue -->
+                            </tbody>
+                        </table>
                     </div>
 
                     <div class="table-container">

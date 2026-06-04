@@ -47,21 +47,21 @@
                     </button>
                 </li>
                 <li>
-                    <button class="menu-item-btn" data-target="customization-tab">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i>
-                        <span>Doanh thu Topping</span>
+                    <button class="menu-item-btn" data-target="item-revenue-tab">
+                        <i class="fa-solid fa-chart-bar"></i>
+                        <span>Doanh thu theo món</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="menu-item-btn" data-target="daily-revenue-tab">
+                        <i class="fa-solid fa-calendar-check"></i>
+                        <span>Doanh thu theo ngày</span>
                     </button>
                 </li>
                 <li>
                     <button class="menu-item-btn" data-target="promotions-tab">
                         <i class="fa-solid fa-tags"></i>
                         <span>Quản lý Khuyến mãi</span>
-                    </button>
-                </li>
-                <li>
-                    <button class="menu-item-btn" data-target="audit-tab">
-                        <i class="fa-solid fa-book-bookmark"></i>
-                        <span>Nhật ký hệ thống</span>
                     </button>
                 </li>
             </ul>
@@ -112,13 +112,6 @@
                                 <div class="stat-value" id="chainOrders">0</div>
                             </div>
                             <div class="stat-icon primary"><i class="fa-solid fa-receipt"></i></div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-info">
-                                <div class="stat-label">Giá trị trung bình đơn</div>
-                                <div class="stat-value" id="chainAvgTicket">0đ</div>
-                            </div>
-                            <div class="stat-icon info"><i class="fa-solid fa-calculator"></i></div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-info">
@@ -193,29 +186,51 @@
                     </div>
                 </section>
 
-                <!-- Tab 3: Customization Analysis -->
-                <section id="customization-tab" class="view-section">
+                <!-- Tab 3: Item Revenue Analysis -->
+                <section id="item-revenue-tab" class="view-section">
                     <div class="table-container">
                         <div class="table-header-bar">
-                            <h4>Phân tích doanh thu từ topping và tùy chỉnh món (Tháng này)</h4>
+                            <h4>Doanh thu theo từng món (Toàn chuỗi)</h4>
                         </div>
                         <table class="custom-table">
                             <thead>
                                 <tr>
-                                    <th>Nhóm tùy chọn</th>
-                                    <th>Tên tùy chọn (Topping)</th>
-                                    <th>Số lần được chọn</th>
-                                    <th>Tổng doanh thu bổ sung</th>
+                                    <th>Tên món ăn</th>
+                                    <th>Số lượng bán</th>
+                                    <th>Tổng doanh thu</th>
                                 </tr>
                             </thead>
-                            <tbody id="customizationTableBody">
-                                <!-- Dynamic customization revenue list -->
+                            <tbody id="itemRevenueBody">
+                                <!-- Dynamic item revenue list -->
                             </tbody>
                         </table>
                     </div>
                 </section>
 
-                <!-- Tab 4: Promotions Management -->
+                <!-- Tab 4: Daily Revenue Summary -->
+                <section id="daily-revenue-tab" class="view-section">
+                    <div class="table-container">
+                        <div class="table-header-bar">
+                            <h4>Tổng hợp doanh thu theo ngày (30 ngày gần nhất)</h4>
+                        </div>
+                        <table class="custom-table">
+                            <thead>
+                                <tr>
+                                    <th>Ngày</th>
+                                    <th>Số đơn</th>
+                                    <th>Chi nhánh Downtown</th>
+                                    <th>Chi nhánh Airport</th>
+                                    <th>Tổng cộng</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dailyRevenueBody">
+                                <!-- Dynamic daily revenue -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Tab 5: Promotions Management -->
                 <section id="promotions-tab" class="view-section">
                     <div class="table-container">
                         <div class="table-header-bar">
@@ -239,33 +254,6 @@
                         </table>
                     </div>
                 </section>
-
-                <!-- Tab 5: System Audits -->
-                <section id="audit-tab" class="view-section">
-                    <div class="table-container">
-                        <div class="table-header-bar">
-                            <h4>Nhật ký hành động nhân viên (Audit Log)</h4>
-                        </div>
-                        <table class="custom-table">
-                            <thead>
-                                <tr>
-                                    <th>ID Log</th>
-                                    <th>Thời gian</th>
-                                    <th>Chi nhánh</th>
-                                    <th>Nhân viên</th>
-                                    <th>Hành động</th>
-                                    <th>Bảng tác động</th>
-                                    <th>ID bản ghi</th>
-                                    <th>Chi tiết hành vi</th>
-                                </tr>
-                            </thead>
-                            <tbody id="auditTableBody">
-                                <!-- Dynamic audit logs -->
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-
             </div>
         </main>
     </div>

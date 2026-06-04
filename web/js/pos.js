@@ -254,8 +254,11 @@ function renderOrderHistory(orders) {
 
     if (orders.length === 0) {
         tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 30px;">Không có đơn hàng nào trong lịch sử.</td></tr>';
+        document.getElementById('historyTotalRevenue').textContent = formatVND(0);
         return;
     }
+
+    let totalPaidRevenue = 0;
 
     orders.forEach(o => {
         const tr = document.createElement('tr');
@@ -274,7 +277,10 @@ function renderOrderHistory(orders) {
             case 'dine_in': typeText = 'Tại bàn'; break;
             case 'takeaway': typeText = 'Mang đi'; break;
             case 'pickup': typeText = 'Nhận hàng'; break;
-            case 'delivery': typeText = 'Giao hàng'; break;
+        }
+
+        if (o.order_status === 'Paid') {
+            totalPaidRevenue += o.total_amount;
         }
 
         tr.innerHTML = `
@@ -294,6 +300,8 @@ function renderOrderHistory(orders) {
         `;
         tbody.appendChild(tr);
     });
+
+    document.getElementById('historyTotalRevenue').textContent = formatVND(totalPaidRevenue);
 }
 
 async function updateOrderStatus(orderId, status) {
@@ -760,6 +768,26 @@ async function loadShiftLeadData() {
 
             if (tbody.children.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">Không có đơn hàng nào đủ điều kiện để hoàn trả.</td></tr>';
+            }
+        }
+
+        // Load daily revenue summary
+        const dailyRes = await API.get('branch_daily_revenue.php');
+        if (dailyRes && dailyRes.success) {
+            const dailyTbody = document.getElementById('shiftDailyBody');
+            dailyTbody.innerHTML = '';
+            if (dailyRes.data.length === 0) {
+                dailyTbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 20px;">Chưa có dữ liệu doanh thu trong 7 ngày gần nhất.</td></tr>';
+            } else {
+                dailyRes.data.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${row.sale_date}</strong></td>
+                        <td>${row.total_orders} đơn</td>
+                        <td><strong style="color: var(--success);">${formatVND(row.total_revenue)}</strong></td>
+                    `;
+                    dailyTbody.appendChild(tr);
+                });
             }
         }
     } catch (err) {

@@ -116,45 +116,23 @@
                         </div>
                     </div>
 
-                    <!-- Alerts and Risk Analysis -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
-                        <!-- At-Risk Items -->
-                        <div class="table-container">
-                            <div class="table-header-bar">
-                                <h4 style="color: var(--warning);"><i class="fa-solid fa-triangle-exclamation"></i> Món ăn có nguy cơ hết hàng</h4>
-                            </div>
-                            <table class="custom-table">
-                                <thead>
-                                    <tr>
-                                        <th>Mã món</th>
-                                        <th>Tên món ăn</th>
-                                        <th>Trạng thái nguyên liệu cấu thành</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="atRiskItemsBody">
-                                    <!-- Dynamic risk items -->
-                                </tbody>
-                            </table>
+                    <!-- Low-stock Warnings -->
+                    <div class="table-container" style="margin-bottom: 25px;">
+                        <div class="table-header-bar">
+                            <h4 style="color: var(--danger);"><i class="fa-solid fa-battery-quarter"></i> Cảnh báo hết kho</h4>
                         </div>
-
-                        <!-- Low-stock Ingredients -->
-                        <div class="table-container">
-                            <div class="table-header-bar">
-                                <h4 style="color: var(--danger);"><i class="fa-solid fa-battery-quarter"></i> Cảnh báo hết kho</h4>
-                            </div>
-                            <table class="custom-table">
-                                <thead>
-                                    <tr>
-                                        <th>Tên nguyên liệu</th>
-                                        <th>Hiện tại</th>
-                                        <th>Định mức cảnh báo</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="lowIngredientsBody">
-                                    <!-- Dynamic low-stock ingredients -->
-                                </tbody>
-                            </table>
-                        </div>
+                        <table class="custom-table">
+                            <thead>
+                                <tr>
+                                    <th>Tên nguyên liệu</th>
+                                    <th>Hiện tại</th>
+                                    <th>Định mức cảnh báo</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lowIngredientsBody">
+                                <!-- Dynamic low-stock ingredients -->
+                            </tbody>
+                        </table>
                     </div>
                 </section>
 
@@ -163,7 +141,10 @@
                     <div class="table-container">
                         <div class="table-header-bar">
                             <h4>Danh sách kho nguyên vật liệu</h4>
-                            <button class="btn btn-secondary" id="refreshInventoryBtn"><i class="fa-solid fa-arrows-rotate"></i> Làm mới</button>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-primary" id="addIngredientBtn"><i class="fa-solid fa-plus"></i> Thêm nguyên vật liệu</button>
+                                <button class="btn btn-secondary" id="refreshInventoryBtn"><i class="fa-solid fa-arrows-rotate"></i> Làm mới</button>
+                            </div>
                         </div>
                         <table class="custom-table">
                             <thead>
@@ -290,6 +271,45 @@
             <div class="modal-footer">
                 <button class="btn btn-secondary" id="cancelAdjustmentBtn">Hủy</button>
                 <button class="btn btn-primary" id="saveAdjustmentBtn">Lưu thay đổi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Add Ingredient -->
+    <div class="modal" id="addIngredientModal">
+        <div class="modal-content" style="max-width: 440px;">
+            <div class="modal-header">
+                <h3>Thêm nguyên vật liệu mới</h3>
+                <button class="modal-close" id="closeAddIngredientModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="newIngName">Tên nguyên vật liệu</label>
+                    <input type="text" id="newIngName" class="form-control" placeholder="VD: Sữa tươi, Hạt cà phê..." style="margin-top: 5px;">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
+                    <div class="form-group">
+                        <label for="newIngStock">Số lượng ban đầu</label>
+                        <input type="number" id="newIngStock" class="form-control" placeholder="0.00" min="0" step="0.01" style="margin-top: 5px;">
+                    </div>
+                    <div class="form-group">
+                        <label for="newIngUnit">Đơn vị</label>
+                        <select id="newIngUnit" class="form-control" style="margin-top: 5px;">
+                            <option value="kg">kg</option>
+                            <option value="liter">lít</option>
+                            <option value="unit">cái / phần</option>
+                            <option value="g">g</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="newIngThreshold">Định mức cảnh báo thiếu kho</label>
+                    <input type="number" id="newIngThreshold" class="form-control" placeholder="VD: 2.00" min="0" step="0.01" style="margin-top: 5px;">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelAddIngredientBtn">Hủy</button>
+                <button class="btn btn-primary" id="saveAddIngredientBtn"><i class="fa-solid fa-plus"></i> Thêm vào kho</button>
             </div>
         </div>
     </div>

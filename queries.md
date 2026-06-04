@@ -204,8 +204,6 @@ INSERT INTO order_item_modifier (order_item_id, option_id, price_delta_at_sale)
 VALUES (?, ?, ?);
 ```
 
-*(Lưu ý: Logic trừ tồn kho tự động đã được lược bỏ do bảng recipe và modifier_recipe đã được xóa)*
-
 ### H. Thêm thông tin thanh toán
 
 ```sql

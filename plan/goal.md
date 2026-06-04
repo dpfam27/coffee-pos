@@ -32,7 +32,7 @@ Xây dựng web đơn giản nhất có thể theo sitemap, tái dùng tối đa
 
 ## Luồng tạo đơn (write — tiêu chí thành công)
 1 transaction trong `create_order.php`:
-`orders` → `order_item` → `order_item_modifier` → `payment` → trừ `ingredient` theo recipe → `loyalty_transaction` → cập nhật `dining_table` → `audit_log`.
+`orders` → `order_item` → `order_item_modifier` → `payment` → `loyalty_transaction` → cập nhật `dining_table` → `audit_log`.
 Áp dụng snapshot giá (Price Integrity): lưu `unit_price` và `price_delta_at_sale` tại thời điểm bán.
 
 ## Tiêu chí hoàn thành

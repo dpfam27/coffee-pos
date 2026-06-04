@@ -62,7 +62,6 @@ async function loadOverviewTab() {
             const data = statsRes.data;
             document.getElementById('chainRevenue').textContent = formatVND(data.total_revenue);
             document.getElementById('chainOrders').textContent = data.total_orders;
-            document.getElementById('chainAvgTicket').textContent = formatVND(data.avg_ticket);
             document.getElementById('chainLowStockCount').textContent = data.low_stock_count;
         }
 
@@ -149,30 +148,57 @@ async function loadBranchesTab() {
     }
 }
 
-async function loadCustomizationTab() {
+async function loadItemRevenueTab() {
     try {
-        const res = await API.get('modifier_revenue.php');
+        const res = await API.get('item_revenue.php');
         if (res && res.success) {
-            const tbody = document.getElementById('customizationTableBody');
+            const tbody = document.getElementById('itemRevenueBody');
             tbody.innerHTML = '';
 
             res.data.forEach(m => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${m.group_name}</td>
-                    <td><strong>${m.option_name}</strong></td>
-                    <td>${m.times_chosen} lần</td>
-                    <td><strong style="color: var(--success);">${formatVND(parseFloat(m.extra_revenue))}</strong></td>
+                    <td><strong>${m.item_name}</strong></td>
+                    <td>${m.quantity_sold} ly/đĩa</td>
+                    <td><strong style="color: var(--success);">${formatVND(parseFloat(m.total_revenue))}</strong></td>
                 `;
                 tbody.appendChild(tr);
             });
 
             if (res.data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">Không có dữ liệu doanh thu topping.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 20px;">Không có dữ liệu doanh thu theo món.</td></tr>';
             }
         }
     } catch (err) {
-        console.error('Error loading customizations report:', err);
+        console.error('Error loading item revenue:', err);
+    }
+}
+
+async function loadDailyRevenueTab() {
+    try {
+        const res = await API.get('daily_revenue.php');
+        if (res && res.success) {
+            const tbody = document.getElementById('dailyRevenueBody');
+            tbody.innerHTML = '';
+
+            res.data.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${row.sale_date}</strong></td>
+                    <td>${row.total_orders} đơn</td>
+                    <td>${formatVND(row.downtown_revenue)}</td>
+                    <td>${formatVND(row.airport_revenue)}</td>
+                    <td><strong style="color: var(--primary);">${formatVND(row.total_revenue)}</strong></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            if (res.data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">Không có dữ liệu doanh thu theo ngày.</td></tr>';
+            }
+        }
+    } catch (err) {
+        console.error('Error loading daily revenue:', err);
     }
 }
 
@@ -212,48 +238,6 @@ async function loadPromotionsTab() {
     }
 }
 
-async function loadAuditTab() {
-    try {
-        const res = await API.get('audit_log.php');
-        if (res && res.success) {
-            const tbody = document.getElementById('auditTableBody');
-            tbody.innerHTML = '';
-
-            res.data.forEach(log => {
-                const tr = document.createElement('tr');
-                
-                let actionBadge = '';
-                if (log.action_type.includes('CREATE')) {
-                    actionBadge = `<span class="badge badge-success">${log.action_type}</span>`;
-                } else if (log.action_type.includes('UPDATE')) {
-                    actionBadge = `<span class="badge badge-info">${log.action_type}</span>`;
-                } else if (log.action_type.includes('DELETE') || log.action_type.includes('VOID') || log.action_type.includes('CANCEL')) {
-                    actionBadge = `<span class="badge badge-danger">${log.action_type}</span>`;
-                } else {
-                    actionBadge = `<span class="badge badge-secondary">${log.action_type}</span>`;
-                }
-
-                tr.innerHTML = `
-                    <td>${log.log_id}</td>
-                    <td style="font-size: 0.8rem; white-space: nowrap;">${log.action_timestamp}</td>
-                    <td><small>${log.location_name}</small></td>
-                    <td><strong>${log.staff_name}</strong> <small style="color: var(--text-secondary);">(${log.staff_role})</small></td>
-                    <td>${actionBadge}</td>
-                    <td><code>${log.table_affected}</code></td>
-                    <td><code>${log.record_id}</code></td>
-                    <td><span style="font-size: 0.85rem;">${log.details}</span></td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            if (res.data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 30px;">Nhật ký hệ thống trống.</td></tr>';
-            }
-        }
-    } catch (err) {
-        console.error('Error loading audit log:', err);
-    }
-}
 
 // ==============================================================================
 // VIEW TABS & SWITCHING
@@ -302,15 +286,15 @@ function switchTab(tabId) {
         } else if (tabId === 'branches-tab') {
             tabTitle = 'Danh sách chi nhánh';
             loadBranchesTab();
-        } else if (tabId === 'customization-tab') {
-            tabTitle = 'Phân tích doanh thu Topping';
-            loadCustomizationTab();
+        } else if (tabId === 'item-revenue-tab') {
+            tabTitle = 'Doanh thu theo món';
+            loadItemRevenueTab();
+        } else if (tabId === 'daily-revenue-tab') {
+            tabTitle = 'Doanh thu theo ngày';
+            loadDailyRevenueTab();
         } else if (tabId === 'promotions-tab') {
             tabTitle = 'Quản lý chương trình khuyến mãi';
             loadPromotionsTab();
-        } else if (tabId === 'audit-tab') {
-            tabTitle = 'Nhật ký hệ thống (Audit Log)';
-            loadAuditTab();
         }
         document.getElementById('currentTabTitle').textContent = tabTitle;
     }

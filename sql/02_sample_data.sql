@@ -1,8 +1,8 @@
 -- =============================================================
 -- FILE  : 02_sample_data.sql
 -- DESC  : Sample data for Coffee Shop Chain POS
---         2 branches · 7 staff · 5 customers
---         13 menu items · 21 orders (3 pending, 17 paid, 1 cancelled)
+--         2 branches · 6 staff · 5 customers
+--         13 menu items · 28 orders
 -- All subtotals and totals are mathematically verified.
 -- =============================================================
 
@@ -17,10 +17,10 @@ INSERT INTO staff (staff_id, location_id, name, role, phone) VALUES
     (1, 1, 'James Carter', 'Admin', '090-111-0001'),
     (2, 1, 'Sarah Nguyen', 'StoreManager', '090-111-0002'),
     (3, 2, 'Tom Pham', 'StoreManager', '090-111-0003'),
-    (4, 1, 'Lisa Tran', 'ShiftLead', '090-111-0004'),
     (5, 1, 'Kevin Le', 'Barista', '090-111-0005'),
     (6, 1, 'Minh Hoang', 'Barista', '090-111-0006'),
-    (7, 2, 'Lan Vo', 'Barista', '090-111-0007');
+    (7, 2, 'Lan Vo', 'Barista', '090-111-0007'),
+    (8, 2, 'Hung Dang', 'ShiftLead', '090-111-0008');
 
 INSERT INTO customer (customer_id, name, email, phone, loyalty_points) VALUES
     (1, 'An Nguyen', 'an.nguyen@email.com', '090-201-0001', 155),
@@ -163,18 +163,26 @@ INSERT INTO orders (order_id, location_id, staff_id, customer_id, table_id, orde
     (7, 1, 5, NULL, NULL, 'takeaway', '2026-06-01 10:00:00', 'Paid', 90000.00),
     (8, 1, 6, 3, 4, 'dine_in', '2026-06-01 10:30:00', 'Paid', 135000.00),
     (9, 1, 5, 1, NULL, 'takeaway', '2026-06-01 11:00:00', 'Paid', 100000.00),
-    (10, 1, 4, 4, 5, 'dine_in', '2026-06-01 11:30:00', 'Paid', 73000.00),
+    (10, 1, 5, 4, 5, 'dine_in', '2026-06-01 11:30:00', 'Paid', 73000.00),
     (11, 1, 6, NULL, NULL, 'takeaway', '2026-06-01 14:00:00', 'Paid', 118000.00),
     (12, 1, 5, 2, 1, 'dine_in', '2026-06-01 14:30:00', 'Paid', 130000.00),
     (13, 1, 6, 3, NULL, 'takeaway', '2026-06-02 09:00:00', 'Paid', 132000.00),
     (14, 1, 5, NULL, NULL, 'takeaway', '2026-06-02 09:30:00', 'Paid', 115000.00),
-    (15, 1, 4, 5, 2, 'dine_in', '2026-06-02 10:00:00', 'Paid', 120000.00),
+    (15, 1, 5, 5, 2, 'dine_in', '2026-06-02 10:00:00', 'Paid', 120000.00),
     (16, 1, 5, 3, NULL, 'takeaway', '2026-06-02 10:30:00', 'Paid', 73000.00),
     (17, 1, 6, 4, 3, 'dine_in', '2026-06-02 11:00:00', 'Paid', 65000.00),
     (18, 2, 7, NULL, 6, 'dine_in', '2026-06-02 11:30:00', 'Paid', 65000.00),
-    (19, 1, 4, NULL, 3, 'dine_in', '2026-06-03 10:05:00', 'Cancelled', 55000.00),
-    (20, 1, 5, 1, NULL, 'delivery', '2026-06-02 15:00:00', 'Paid', 55000.00),
-    (21, 1, 5, 5, NULL, 'takeaway', '2026-06-02 15:30:00', 'Paid', 49500.00);
+    (19, 1, 5, NULL, 3, 'dine_in', '2026-06-03 10:05:00', 'Cancelled', 55000.00),
+    (20, 1, 5, 1, NULL, 'takeaway', '2026-06-02 15:00:00', 'Paid', 55000.00),
+    (21, 1, 5, 5, NULL, 'takeaway', '2026-06-02 15:30:00', 'Paid', 49500.00),
+    -- Airport Branch orders
+    (22, 2, 7, 2, 7, 'dine_in', '2026-06-01 08:30:00', 'Paid', 120000.00),
+    (23, 2, 7, 3, NULL, 'takeaway', '2026-06-01 09:15:00', 'Paid', 65000.00),
+    (24, 2, 8, NULL, 8, 'dine_in', '2026-06-01 11:00:00', 'Paid', 95000.00),
+    (25, 2, 8, 1, NULL, 'takeaway', '2026-06-02 08:00:00', 'Paid', 73000.00),
+    (26, 2, 7, NULL, 6, 'dine_in', '2026-06-02 09:30:00', 'Paid', 110000.00),
+    (27, 2, 8, 4, NULL, 'takeaway', '2026-06-02 13:00:00', 'Paid', 55000.00),
+    (28, 2, 7, NULL, 7, 'dine_in', '2026-06-03 07:45:00', 'Paid', 130000.00);
 
 INSERT INTO order_item (order_item_id, order_id, item_id, quantity, unit_price, subtotal) VALUES
     (1, 1, 3, 1, 55000.00, 85000.00),
@@ -206,7 +214,19 @@ INSERT INTO order_item (order_item_id, order_id, item_id, quantity, unit_price, 
     (27, 18, 2, 1, 55000.00, 65000.00),
     (28, 19, 3, 1, 55000.00, 55000.00),
     (29, 20, 6, 1, 55000.00, 55000.00),
-    (30, 21, 2, 1, 55000.00, 55000.00);
+    (30, 21, 2, 1, 55000.00, 55000.00),
+    -- Airport Branch order items
+    (31, 22, 4, 1, 65000.00, 75000.00),
+    (32, 22, 10, 1, 35000.00, 45000.00),
+    (33, 23, 7, 1, 65000.00, 65000.00),
+    (34, 24, 2, 1, 55000.00, 55000.00),
+    (35, 24, 13, 1, 40000.00, 40000.00),
+    (36, 25, 3, 1, 55000.00, 73000.00),
+    (37, 26, 8, 1, 60000.00, 70000.00),
+    (38, 26, 11, 1, 40000.00, 40000.00),
+    (39, 27, 5, 1, 55000.00, 55000.00),
+    (40, 28, 4, 1, 65000.00, 75000.00),
+    (41, 28, 6, 1, 55000.00, 55000.00);
 
 INSERT INTO order_item_modifier (oi_modifier_id, order_item_id, option_id, price_delta_at_sale) VALUES
     (1, 1, 2, 10000.00),
@@ -292,7 +312,14 @@ INSERT INTO payment (payment_id, order_id, payment_method, amount_paid, payment_
     (14, 17, 'Cash', 65000.00, '2026-06-02 11:05:00'),
     (15, 18, 'Cash', 65000.00, '2026-06-02 11:35:00'),
     (16, 20, 'Mobile', 55000.00, '2026-06-02 15:05:00'),
-    (17, 21, 'Cash', 49500.00, '2026-06-02 15:35:00');
+    (17, 21, 'Cash', 49500.00, '2026-06-02 15:35:00'),
+    (18, 22, 'Card', 120000.00, '2026-06-01 08:35:00'),
+    (19, 23, 'Cash', 65000.00, '2026-06-01 09:20:00'),
+    (20, 24, 'Mobile', 95000.00, '2026-06-01 11:05:00'),
+    (21, 25, 'Cash', 73000.00, '2026-06-02 08:05:00'),
+    (22, 26, 'Card', 110000.00, '2026-06-02 09:35:00'),
+    (23, 27, 'Mobile', 55000.00, '2026-06-02 13:05:00'),
+    (24, 28, 'Cash', 130000.00, '2026-06-03 07:50:00');
 
 INSERT INTO order_promotion (order_promotion_id, order_id, promotion_id, amount_discounted) VALUES
     (1, 21, 1, 5500.00);
@@ -310,6 +337,6 @@ INSERT INTO loyalty_transaction (loyalty_txn_id, customer_id, order_id, points_c
     (10, 5, 15, 120, 'earn', '2026-06-02 10:05:00');
 
 INSERT INTO audit_log (log_id, staff_id, action_type, table_affected, record_id, action_timestamp, details) VALUES
-    (1, 4, 'VOID_ORDER', 'orders', 19, '2026-06-03 10:07:00', 'Customer changed mind');
+    (1, 5, 'VOID_ORDER', 'orders', 19, '2026-06-03 10:07:00', 'Customer changed mind');
 
 SET FOREIGN_KEY_CHECKS = 1;

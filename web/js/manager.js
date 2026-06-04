@@ -82,30 +82,12 @@ async function loadDashboardTab() {
             document.getElementById('branchOrderCount').textContent = paidCount;
         }
 
-        // Load at-risk and low-stock alerts
+        // Load low-stock alerts
         const lowStockRes = await API.get('low_stock.php');
         if (lowStockRes && lowStockRes.success) {
-            const atRisk = lowStockRes.at_risk_items;
             const lowIngs = lowStockRes.low_ingredients;
 
             document.getElementById('branchLowStockCount').textContent = lowIngs.length;
-
-            // Render risk items
-            const riskTbody = document.getElementById('atRiskItemsBody');
-            riskTbody.innerHTML = '';
-            if (atRisk.length === 0) {
-                riskTbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-muted);">Không có món ăn nào gặp nguy cơ.</td></tr>';
-            } else {
-                atRisk.forEach(item => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td><strong>#${item.item_id}</strong></td>
-                        <td>${item.item_name}</td>
-                        <td><span class="badge badge-danger">Thiếu nguyên liệu chính</span></td>
-                    `;
-                    riskTbody.appendChild(tr);
-                });
-            }
 
             // Render low-stock ingredients
             const lowIngsTbody = document.getElementById('lowIngredientsBody');
@@ -330,6 +312,65 @@ function closeAdjustmentModal() {
 }
 
 // ==============================================================================
+// ADD INGREDIENT MODAL
+// ==============================================================================
+
+function openAddIngredientModal() {
+    document.getElementById('newIngName').value = '';
+    document.getElementById('newIngStock').value = '';
+    document.getElementById('newIngUnit').value = 'kg';
+    document.getElementById('newIngThreshold').value = '';
+    document.getElementById('addIngredientModal').classList.add('show');
+}
+
+async function saveNewIngredient() {
+    const name = document.getElementById('newIngName').value.trim();
+    const stock = parseFloat(document.getElementById('newIngStock').value);
+    const unit = document.getElementById('newIngUnit').value;
+    const threshold = parseFloat(document.getElementById('newIngThreshold').value);
+
+    if (!name) {
+        alert('Vui lòng nhập tên nguyên vật liệu!');
+        return;
+    }
+    if (isNaN(stock) || stock < 0) {
+        alert('Số lượng không hợp lệ!');
+        return;
+    }
+    if (isNaN(threshold) || threshold < 0) {
+        alert('Định mức cảnh báo không hợp lệ!');
+        return;
+    }
+
+    const saveBtn = document.getElementById('saveAddIngredientBtn');
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+
+    try {
+        const res = await API.post('inventory.php', {
+            action: 'add_new',
+            name: name,
+            stock_level: stock,
+            unit: unit,
+            low_stock_threshold: threshold
+        });
+        if (res && res.success) {
+            alert(`Đã thêm ngành vật liệu "${name}" vào kho thành công!`);
+            document.getElementById('addIngredientModal').classList.remove('show');
+            await loadInventoryTab();
+            await loadDashboardTab();
+        } else {
+            alert(res.error || 'Lỗi thêm nguyên vật liệu');
+        }
+    } catch (err) {
+        alert(err.message);
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Thêm vào kho';
+    }
+}
+
+// ==============================================================================
 // VIEW TABS & SWITCHING
 // ==============================================================================
 
@@ -359,6 +400,12 @@ function setupEventListeners() {
     document.getElementById('closeAdjustmentModal').addEventListener('click', closeAdjustmentModal);
     document.getElementById('cancelAdjustmentBtn').addEventListener('click', closeAdjustmentModal);
     document.getElementById('saveAdjustmentBtn').addEventListener('click', saveStockAdjustment);
+
+    // Add ingredient modal
+    document.getElementById('addIngredientBtn').addEventListener('click', openAddIngredientModal);
+    document.getElementById('closeAddIngredientModal').addEventListener('click', () => document.getElementById('addIngredientModal').classList.remove('show'));
+    document.getElementById('cancelAddIngredientBtn').addEventListener('click', () => document.getElementById('addIngredientModal').classList.remove('show'));
+    document.getElementById('saveAddIngredientBtn').addEventListener('click', saveNewIngredient);
 }
 
 function switchTab(tabId) {

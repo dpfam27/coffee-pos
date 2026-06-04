@@ -20,6 +20,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require_role(['StoreManager', 'Admin']);
     
     $input = json_decode(file_get_contents('php://input'), true);
+    $action_flag = $input['action'] ?? '';
+
+    // ---- ADD NEW INGREDIENT ----
+    if ($action_flag === 'add_new') {
+        require_role(['StoreManager', 'Admin']);
+        $name      = trim($input['name'] ?? '');
+        $stock     = isset($input['stock_level']) ? (float)$input['stock_level'] : 0.0;
+        $unit      = trim($input['unit'] ?? 'kg');
+        $threshold = isset($input['low_stock_threshold']) ? (float)$input['low_stock_threshold'] : 1.0;
+
+        if (empty($name)) {
+            json(['success' => false, 'error' => 'Tên nguyên vật liệu không được để trống'], 400);
+        }
+
+        try {
+            $ins = $conn->prepare("INSERT INTO ingredient (location_id, name, stock_level, unit, low_stock_threshold) VALUES (?, ?, ?, ?, ?)");
+            $ins->bind_param('isdsd', $location_id, $name, $stock, $unit, $threshold);
+            $ins->execute();
+            $new_id = $conn->insert_id;
+            $ins->close();
+            json(['success' => true, 'message' => 'Đã thêm nguyên vật liệu mới vào kho', 'ingredient_id' => $new_id]);
+        } catch (Exception $e) {
+            json(['success' => false, 'error' => 'Lỗi thêm nguyên vật liệu: ' . $e->getMessage()], 500);
+        }
+    }
+
     $ingredient_id = isset($input['ingredient_id']) ? (int)$input['ingredient_id'] : 0;
     $adjustment_amount = isset($input['amount']) ? (float)$input['amount'] : 0.0;
     $action_type = $input['action_type'] ?? 'adjust'; // 'add' (restock) or 'set' (manual override) or 'reduce' (waste/export)
@@ -62,16 +88,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $upd_stmt->bind_param('di', $new_stock, $ingredient_id);
         $upd_stmt->execute();
         $upd_stmt->close();
-        
-        // Log action in audit log
-        $staff_id = $_SESSION['staff_id'];
-        $log_stmt = $conn->prepare("
-            INSERT INTO audit_log (staff_id, action_type, table_affected, record_id, details)
-            VALUES (?, 'INVENTORY_ADJUSTMENT', 'ingredient', ?, ?)
-        ");
-        $log_stmt->bind_param('iis', $staff_id, $ingredient_id, $details);
-        $log_stmt->execute();
-        $log_stmt->close();
         
         $conn->commit();
         

@@ -52,10 +52,13 @@ echo.
 echo [INFO] Dang mo trinh duyet va khoi chay server. Nhan Ctrl+C de dung...
 echo.
 
+:: Move to the folder that contains this script so the web root is correct
+cd /d "%~dp0"
+
 :: Open default browser to login page
 start http://localhost:8000/web/index.html
 
-:: Start PHP built-in web server
-%PHP_PATH% -S localhost:8000
+:: Start PHP built-in web server (document root = this script's folder)
+%PHP_PATH% -S localhost:8000 -t "%~dp0"
 
 pause

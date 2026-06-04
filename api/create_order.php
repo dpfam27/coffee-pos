@@ -204,8 +204,6 @@ try {
             $ins_mod_stmt->execute();
             $ins_mod_stmt->close();
         }
-
-        // Note: Inventory deduction is disabled because the recipe and modifier_recipe tables have been removed.
     }
 
     // 7. Insert Payment record

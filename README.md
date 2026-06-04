@@ -18,7 +18,7 @@ Dự án cung cấp 4 phân hệ chính tương ứng với các vai trò (Roles
 * **Tạo đơn hàng mới (New Order Flow):** 
   * Duyệt thực đơn theo danh mục (Espresso, Cold Brew, Trà, Đồ ăn).
   * Lựa chọn kích cỡ (Size), nhiệt độ (Temperature), loại sữa (Milk), mức đường (Sweetness) và các món thêm (Add-ons).
-  * Giỏ hàng (Cart Review) hỗ trợ chọn loại đơn hàng (Dine-in, Takeaway, Pickup, Delivery) và chọn bàn hoặc khách hàng thân thiết.
+  * Giỏ hàng (Cart Review) hỗ trợ chọn loại đơn hàng (Dine-in, Takeaway, Pickup) và chọn bàn hoặc khách hàng thân thiết.
   * Thanh toán (Payment) bằng nhiều phương thức (Tiền mặt, Thẻ, Chuyển khoản qua di động).
 * **Quản lý hàng chờ pha chế (Prep Queue):** Theo dõi và chuyển đổi trạng thái đơn hàng thời gian thực (Pending → Preparing → Served).
 * **Quản lý bàn (Tables):** Xem trạng thái các bàn (Available, Occupied) theo chi nhánh hiện tại.

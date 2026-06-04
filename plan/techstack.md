@@ -6,7 +6,7 @@ Giữ nguyên stack đã có để "đơn giản nhất có thể". Không frame
 ## Thành phần
 | Lớp | Công nghệ | Lý do |
 |---|---|---|
-| Database | **MariaDB / MySQL** (`coffee_pos`, 21 bảng + 1 view) | Đã có sẵn schema + sample data |
+| Database | **MariaDB / MySQL** (`final`, 18 bảng + 1 view) | Đã có sẵn schema + sample data |
 | Backend | **PHP thuần + mysqli** (prepared statements) | db.php và 6 endpoint cũ đều viết kiểu này |
 | Frontend | **HTML + CSS + JavaScript thuần** (fetch API) | Nhẹ nhất, không cần build |
 | Auth | **PHP session + `password_hash()`/`password_verify()`** | Mật khẩu thật, không cần thư viện ngoài |

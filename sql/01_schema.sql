@@ -1,9 +1,9 @@
 -- =============================================================
 -- FILE  : 01_schema.sql
--- DB    : coffee_pos
+-- DB    : final
 -- ENGINE: MariaDB
 -- DESC  : Full schema for Coffee Shop Chain POS system
---         21 tables + 1 view (v_customer_loyalty_balance)
+--         18 tables + 1 view (v_customer_loyalty_balance)
 -- =============================================================
 
 CREATE DATABASE IF NOT EXISTS final
@@ -118,7 +118,7 @@ CREATE TABLE dining_table (
 -- ── 10. orders ────────────────────────────────────────────────
 -- NOTE: customer_id and table_id are nullable
 --   customer_id NULL = walk-in customer without loyalty account
---   table_id    NULL = takeaway / pickup / delivery order
+--   table_id    NULL = takeaway / pickup order
 DROP TABLE IF EXISTS orders;
 CREATE TABLE orders (
     order_id     INT           NOT NULL AUTO_INCREMENT,
@@ -126,7 +126,7 @@ CREATE TABLE orders (
     staff_id     INT           NOT NULL,
     customer_id  INT           NULL,
     table_id     INT           NULL,
-    order_type   ENUM('dine_in','takeaway','pickup','delivery') NOT NULL,
+    order_type   ENUM('dine_in','takeaway','pickup') NOT NULL,
     order_date   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
     order_status ENUM('Pending','Preparing','Served','Paid','Cancelled') NOT NULL DEFAULT 'Pending',
     total_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
@@ -194,7 +194,7 @@ CREATE TABLE ingredient (
         FOREIGN KEY (location_id) REFERENCES location(location_id)
 ) ENGINE=InnoDB;
 
--- ── 17. promotion ─────────────────────────────────────────────
+-- ── 15. promotion ─────────────────────────────────────────────
 DROP TABLE IF EXISTS promotion;
 CREATE TABLE promotion (
     promotion_id   INT           NOT NULL AUTO_INCREMENT,
@@ -207,7 +207,7 @@ CREATE TABLE promotion (
     PRIMARY KEY (promotion_id)
 ) ENGINE=InnoDB;
 
--- ── 18. order_promotion ───────────────────────────────────────
+-- ── 16. order_promotion ───────────────────────────────────────
 -- Captures the actual discount amount applied (snapshot).
 DROP TABLE IF EXISTS order_promotion;
 CREATE TABLE order_promotion (
@@ -220,7 +220,7 @@ CREATE TABLE order_promotion (
     CONSTRAINT fk_op_promotion FOREIGN KEY (promotion_id) REFERENCES promotion(promotion_id)
 ) ENGINE=InnoDB;
 
--- ── 19. loyalty_transaction ───────────────────────────────────
+-- ── 17. loyalty_transaction ───────────────────────────────────
 -- Append-only ledger. points_change is always stored as a positive integer.
 -- The sign is derived from txn_type: earn = +points_change, redeem = -points_change.
 -- customer.loyalty_points is a cached balance for performance; the source of
@@ -238,7 +238,7 @@ CREATE TABLE loyalty_transaction (
     CONSTRAINT fk_lt_order    FOREIGN KEY (order_id)    REFERENCES orders(order_id)
 ) ENGINE=InnoDB;
 
--- ── 21. audit_log ─────────────────────────────────────────────
+-- ── 18. audit_log ─────────────────────────────────────────────
 DROP TABLE IF EXISTS audit_log;
 CREATE TABLE audit_log (
     log_id           INT         NOT NULL AUTO_INCREMENT,

@@ -1,0 +1,35 @@
+# ───────── OS ─────────
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+
+# ───────── IDE / Editor ─────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ───────── PHP ─────────
+vendor/
+composer.lock
+*.log
+php_errors.log
+
+# ───────── Server / runtime ─────────
+*.pid
+*.cache
+/tmp/
+/temp/
+
+# ───────── Secrets / local config ─────────
+# db.php chứa mật khẩu MySQL — bỏ comment dòng dưới nếu không muốn commit credential
+# api/db.php
+.env
+*.local
+
+# ───────── Misc ─────────
+*.bak
+*.tmp
+*.orig
