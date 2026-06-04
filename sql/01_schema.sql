@@ -194,37 +194,6 @@ CREATE TABLE ingredient (
         FOREIGN KEY (location_id) REFERENCES location(location_id)
 ) ENGINE=InnoDB;
 
--- ── 15. recipe (base recipe per item) ────────────────────────
--- Because ingredient is per-branch, recipe rows are also branch-scoped
--- via the ingredient_id's location_id.
--- Sample data provides recipes for Branch 1 (ingredient_id 1-11).
-DROP TABLE IF EXISTS recipe;
-CREATE TABLE recipe (
-    recipe_id         INT           NOT NULL AUTO_INCREMENT,
-    item_id           INT           NOT NULL,
-    ingredient_id     INT           NOT NULL,
-    quantity_required DECIMAL(10,2) NOT NULL,
-    PRIMARY KEY (recipe_id),
-    UNIQUE KEY uq_recipe_item_ingredient (item_id, ingredient_id),
-    CONSTRAINT fk_recipe_item       FOREIGN KEY (item_id)       REFERENCES menu_item(item_id),
-    CONSTRAINT fk_recipe_ingredient FOREIGN KEY (ingredient_id) REFERENCES ingredient(ingredient_id)
-) ENGINE=InnoDB;
-
--- ── 16. modifier_recipe ───────────────────────────────────────
--- Additional ingredient consumed when a modifier option is chosen.
--- Sample data provides modifier recipes for Branch 1 only.
-DROP TABLE IF EXISTS modifier_recipe;
-CREATE TABLE modifier_recipe (
-    mod_recipe_id     INT           NOT NULL AUTO_INCREMENT,
-    option_id         INT           NOT NULL,
-    ingredient_id     INT           NOT NULL,
-    quantity_required DECIMAL(10,2) NOT NULL,
-    PRIMARY KEY (mod_recipe_id),
-    UNIQUE KEY uq_modrecipe_option_ingredient (option_id, ingredient_id),
-    CONSTRAINT fk_modrecipe_option     FOREIGN KEY (option_id)     REFERENCES modifier_option(option_id),
-    CONSTRAINT fk_modrecipe_ingredient FOREIGN KEY (ingredient_id) REFERENCES ingredient(ingredient_id)
-) ENGINE=InnoDB;
-
 -- ── 17. promotion ─────────────────────────────────────────────
 DROP TABLE IF EXISTS promotion;
 CREATE TABLE promotion (
@@ -267,18 +236,6 @@ CREATE TABLE loyalty_transaction (
     PRIMARY KEY (loyalty_txn_id),
     CONSTRAINT fk_lt_customer FOREIGN KEY (customer_id) REFERENCES customer(customer_id),
     CONSTRAINT fk_lt_order    FOREIGN KEY (order_id)    REFERENCES orders(order_id)
-) ENGINE=InnoDB;
-
--- ── 20. delivery ──────────────────────────────────────────────
-DROP TABLE IF EXISTS delivery;
-CREATE TABLE delivery (
-    delivery_id     INT  NOT NULL AUTO_INCREMENT,
-    order_id        INT  NOT NULL,
-    shipping_address TEXT NOT NULL,
-    delivery_status ENUM('Preparing','OutForDelivery','Delivered','Failed')
-                        NOT NULL DEFAULT 'Preparing',
-    PRIMARY KEY (delivery_id),
-    CONSTRAINT fk_delivery_order FOREIGN KEY (order_id) REFERENCES orders(order_id)
 ) ENGINE=InnoDB;
 
 -- ── 21. audit_log ─────────────────────────────────────────────

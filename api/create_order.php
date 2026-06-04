@@ -205,54 +205,7 @@ try {
             $ins_mod_stmt->close();
         }
 
-        // 6. Deduct Inventory Stock (Recipe & Modifier Recipe)
-        // Deduct base recipes
-        $recipe_stmt = $conn->prepare("
-            SELECT ingredient_id, quantity_required 
-            FROM   recipe 
-            WHERE  item_id = ?
-        ");
-        $recipe_stmt->bind_param('i', $item['item_id']);
-        $recipe_stmt->execute();
-        $recipes = $recipe_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-        $recipe_stmt->close();
-
-        foreach ($recipes as $rec) {
-            $deduct_qty = (float)$rec['quantity_required'] * $item['quantity'];
-            $deduct_stmt = $conn->prepare("
-                UPDATE ingredient 
-                SET    stock_level = stock_level - ? 
-                WHERE  ingredient_id = ? AND location_id = ?
-            ");
-            $deduct_stmt->bind_param('dii', $deduct_qty, $rec['ingredient_id'], $location_id);
-            $deduct_stmt->execute();
-            $deduct_stmt->close();
-        }
-
-        // Deduct modifier recipes
-        foreach ($item['modifiers'] as $mod) {
-            $mod_rec_stmt = $conn->prepare("
-                SELECT ingredient_id, quantity_required 
-                FROM   modifier_recipe 
-                WHERE  option_id = ?
-            ");
-            $mod_rec_stmt->bind_param('i', $mod['option_id']);
-            $mod_rec_stmt->execute();
-            $mod_recipes = $mod_rec_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-            $mod_rec_stmt->close();
-
-            foreach ($mod_recipes as $mod_rec) {
-                $deduct_qty = (float)$mod_rec['quantity_required'] * $item['quantity'];
-                $deduct_stmt = $conn->prepare("
-                    UPDATE ingredient 
-                    SET    stock_level = stock_level - ? 
-                    WHERE  ingredient_id = ? AND location_id = ?
-                ");
-                $deduct_stmt->bind_param('dii', $deduct_qty, $mod_rec['ingredient_id'], $location_id);
-                $deduct_stmt->execute();
-                $deduct_stmt->close();
-            }
-        }
+        // Note: Inventory deduction is disabled because the recipe and modifier_recipe tables have been removed.
     }
 
     // 7. Insert Payment record

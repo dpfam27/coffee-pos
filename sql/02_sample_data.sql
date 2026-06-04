@@ -149,34 +149,6 @@ INSERT INTO ingredient (ingredient_id, location_id, name, stock_level, unit, low
     (21, 2, 'Croissant', 8.00, 'unit', 5.00),
     (22, 2, 'Blueberry muffin', 6.00, 'unit', 4.00);
 
-INSERT INTO recipe (recipe_id, item_id, ingredient_id, quantity_required) VALUES
-    (1, 1, 1, 0.01),
-    (2, 2, 1, 0.01),
-    (3, 2, 2, 0.08),
-    (4, 3, 1, 0.01),
-    (5, 3, 2, 0.20),
-    (6, 4, 1, 0.01),
-    (7, 4, 2, 0.20),
-    (8, 4, 7, 0.02),
-    (9, 5, 1, 0.02),
-    (10, 5, 2, 0.15),
-    (11, 6, 1, 0.02),
-    (12, 7, 1, 0.02),
-    (13, 7, 6, 0.01),
-    (14, 8, 8, 0.01),
-    (15, 8, 2, 0.20),
-    (16, 9, 9, 0.01),
-    (17, 9, 2, 0.20),
-    (18, 10, 10, 1.00),
-    (19, 11, 11, 1.00);
-
-INSERT INTO modifier_recipe (mod_recipe_id, option_id, ingredient_id, quantity_required) VALUES
-    (1, 6, 3, 0.20),
-    (2, 7, 4, 0.20),
-    (3, 8, 5, 0.20),
-    (4, 12, 1, 0.01),
-    (5, 13, 6, 0.01);
-
 INSERT INTO promotion (promotion_id, name, discount_type, discount_value, start_date, end_date, is_active) VALUES
     (1, 'Happy Hour 10% Off', 'percent', 10.00, '2026-01-01', '2026-12-31', 1),
     (2, 'First Order 20k Off', 'fixed', 20000.00, '2026-01-01', '2026-06-30', 0);
@@ -336,9 +308,6 @@ INSERT INTO loyalty_transaction (loyalty_txn_id, customer_id, order_id, points_c
     (8, 4, 10, 73, 'earn', '2026-06-01 11:35:00'),
     (9, 4, 17, 65, 'earn', '2026-06-02 11:05:00'),
     (10, 5, 15, 120, 'earn', '2026-06-02 10:05:00');
-
-INSERT INTO delivery (delivery_id, order_id, shipping_address, delivery_status) VALUES
-    (1, 20, '45 Le Loi Street, District 1, Ho Chi Minh City', 'Delivered');
 
 INSERT INTO audit_log (log_id, staff_id, action_type, table_affected, record_id, action_timestamp, details) VALUES
     (1, 4, 'VOID_ORDER', 'orders', 19, '2026-06-03 10:07:00', 'Customer changed mind');

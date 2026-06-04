@@ -35,23 +35,18 @@ GROUP BY oi.order_item_id, o.order_id, o.order_date,
 ORDER BY o.order_date ASC;
 
 -- ─────────────────────────────────────────────────────────────
--- UC2  Items at Risk of Going Unavailable  (Store Manager)
--- Technique: correlated subquery with EXISTS  (Ch. 8)
+-- UC2  Ingredients at Risk of Going Unavailable  (Store Manager)
+-- Technique: simple query on ingredient (adapted due to recipe removal)
 -- ─────────────────────────────────────────────────────────────
 SELECT
-    mi.item_id,
-    mi.item_name
-FROM   menu_item mi
-WHERE  mi.is_available = 1
-  AND  EXISTS (
-           SELECT 1
-           FROM   recipe r
-           JOIN   ingredient i ON i.ingredient_id = r.ingredient_id
-           WHERE  r.item_id      = mi.item_id
-             AND  i.location_id  = 1
-             AND  i.stock_level  < i.low_stock_threshold
-       )
-ORDER BY mi.item_name;
+    name,
+    stock_level,
+    low_stock_threshold,
+    unit
+FROM  ingredient
+WHERE location_id  = 1
+  AND stock_level  < low_stock_threshold
+ORDER BY (low_stock_threshold - stock_level) DESC;
 
 -- ─────────────────────────────────────────────────────────────
 -- UC3  Revenue by Customization Option  (Admin)
