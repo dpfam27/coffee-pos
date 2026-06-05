@@ -53,6 +53,7 @@
 /* ── Reset ─────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+input, textarea, select { -webkit-appearance: none; appearance: none; }
 body {
   font-family: var(--sans);
   font-size: 14px;
@@ -170,7 +171,10 @@ button, input, select, textarea { font-family: inherit; }
   border-radius: var(--r1);
   color: var(--t1);
   font-size: 13px;
+  font-family: inherit;
   outline: none;
+  -webkit-appearance: none;
+  appearance: none;
   transition: border-color var(--dur), box-shadow var(--dur);
 }
 .form-control::placeholder { color: var(--t3); }
@@ -282,10 +286,26 @@ select.form-control {
 .login-form .form-control {
   height: 40px;
   font-size: 14px;
-  background: var(--s3);
-  border-color: var(--b2);
+  background-color: #222018 !important;
+  border: 1px solid rgba(255,255,255,.11) !important;
+  color: #f2ede6 !important;
+  -webkit-appearance: none;
+  appearance: none;
+  box-shadow: none;
 }
-.login-form .form-control:focus { border-color: var(--amber); box-shadow: 0 0 0 3px var(--amber-dim); }
+.login-form .form-control:focus {
+  border-color: var(--amber) !important;
+  box-shadow: 0 0 0 3px var(--amber-dim) !important;
+  background-color: #222018 !important;
+}
+.login-form .form-control:-webkit-autofill,
+.login-form .form-control:-webkit-autofill:hover,
+.login-form .form-control:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #222018 inset !important;
+  -webkit-text-fill-color: #f2ede6 !important;
+  border: 1px solid rgba(255,255,255,.11) !important;
+  caret-color: #f2ede6;
+}
 
 .login-form .btn-primary { height: 40px; font-size: 14px; border-radius: var(--r1); margin-top: 4px; }
 
@@ -311,7 +331,7 @@ select.form-control {
 }
 .error-message.show { display: flex; }
 
-.demo-accounts { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--b1); }
+.demo-accounts { margin-top: 20px; padding-top: 4px; }
 
 .demo-toggle {
   display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%;

@@ -9,7 +9,6 @@ let menuData       = [];
 let editingItemId  = null;
 let editingMenuStaffId = null;
 let activeIngredientForAdjustment = null;
-let editingMgrPromoId = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     initApp();
@@ -36,7 +35,7 @@ async function initApp() {
         }
         setInterval(updateClock, 1000);
         updateClock();
-        await loadDashboardTab();
+        await loadReportsTab();
     } catch (err) { console.error('Init Error:', err); }
 }
 
@@ -446,7 +445,7 @@ async function resetStaffPin(staffId, name) {
     } catch (err) { alert(err.message); }
 }
 
-// ── PROMOTIONS (chi nhánh) ─────────────────────────────────────
+// ── PROMOTIONS (chi nhánh — view only) ────────────────────────
 
 async function loadPromotionsTab() {
     try {
@@ -455,23 +454,14 @@ async function loadPromotionsTab() {
         tbody.innerHTML = '';
         if (res?.success && res.data?.length) {
             res.data.forEach(p => {
-                const typeText = p.discount_type === 'percent' ? 'Giảm %' : 'Giảm tiền';
-                const valText  = p.discount_type === 'percent' ? `${p.discount_value}%` : formatVND(p.discount_value);
-                const badge    = p.is_active
+                const typeText   = p.discount_type === 'percent' ? 'Giảm %' : 'Giảm tiền';
+                const valText    = p.discount_type === 'percent' ? `${p.discount_value}%` : formatVND(p.discount_value);
+                const badge      = p.is_active
                     ? '<span class="badge badge-success">Đang chạy</span>'
                     : '<span class="badge badge-secondary">Tạm ngừng</span>';
                 const scopeBadge = p.location_id === null
                     ? '<span class="badge badge-info">Toàn chuỗi</span>'
-                    : '<span class="badge badge-secondary">Chi nhánh</span>';
-                // Chain-wide promos: show info only, no edit/delete buttons (Admin manages those)
-                const actions = p.location_id !== null
-                    ? `<button class="btn btn-secondary" style="padding:4px 8px;font-size:.75rem;margin-right:4px;" onclick='openMgrPromoModal(${JSON.stringify(p)})'>
-                           <i class="fa-solid fa-pen-to-square"></i>
-                       </button>
-                       <button class="btn btn-danger" style="padding:4px 8px;font-size:.75rem;" onclick="deleteMgrPromo(${p.promotion_id}, '${p.name}')">
-                           <i class="fa-solid fa-trash"></i>
-                       </button>`
-                    : `<span style="font-size:.75rem;color:var(--t2);">Chỉ Admin sửa</span>`;
+                    : '<span class="badge badge-brand">Chi nhánh</span>';
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td><strong>${p.name}</strong></td>
@@ -480,104 +470,44 @@ async function loadPromotionsTab() {
                     <td>${p.start_date}</td>
                     <td>${p.end_date}</td>
                     <td>${scopeBadge}</td>
-                    <td>${badge}</td>
-                    <td>${actions}</td>`;
+                    <td>${badge}</td>`;
                 tbody.appendChild(tr);
             });
         } else {
-            tbody.innerHTML = emptyRow(8, 'Chưa có khuyến mãi nào.');
+            tbody.innerHTML = emptyRow(7, 'Chưa có khuyến mãi nào.');
         }
     } catch (err) { console.error('loadPromotionsTab:', err); }
 }
 
-function openMgrPromoModal(promo = null) {
-    editingMgrPromoId = promo ? promo.promotion_id : null;
-    document.getElementById('mgrPromoModalTitle').textContent = promo ? 'Sửa khuyến mãi' : 'Thêm khuyến mãi mới';
-    document.getElementById('mgrPromoName').value       = promo?.name           || '';
-    document.getElementById('mgrPromoType').value       = promo?.discount_type  || 'percent';
-    document.getElementById('mgrPromoValue').value      = promo?.discount_value || '';
-    document.getElementById('mgrPromoStartDate').value  = promo?.start_date     || '';
-    document.getElementById('mgrPromoEndDate').value    = promo?.end_date       || '';
-    document.getElementById('mgrPromoIsActive').checked = promo ? !!promo.is_active : true;
-    document.getElementById('mgrPromoModal').classList.add('show');
-}
-
-async function saveMgrPromo() {
-    const payload = {
-        name:           document.getElementById('mgrPromoName').value.trim(),
-        discount_type:  document.getElementById('mgrPromoType').value,
-        discount_value: parseFloat(document.getElementById('mgrPromoValue').value),
-        start_date:     document.getElementById('mgrPromoStartDate').value,
-        end_date:       document.getElementById('mgrPromoEndDate').value,
-        is_active:      document.getElementById('mgrPromoIsActive').checked ? 1 : 0,
-    };
-    if (editingMgrPromoId) payload._method = 'PUT', payload.promotion_id = editingMgrPromoId;
-    try {
-        const res = await API.post('promotions.php', payload);
-        if (res?.success) {
-            document.getElementById('mgrPromoModal').classList.remove('show');
-            await loadPromotionsTab();
-        } else {
-            alert(res?.error || 'Lỗi lưu khuyến mãi');
-        }
-    } catch (err) { alert(err.message); }
-}
-
-async function deleteMgrPromo(promoId, name) {
-    if (!confirm(`Xóa/vô hiệu hóa khuyến mãi "${name}"?`)) return;
-    try {
-        const res = await API.post('promotions.php', { _method: 'DELETE', promotion_id: promoId });
-        if (res?.success) {
-            alert(res.message);
-            await loadPromotionsTab();
-        } else {
-            alert(res?.error || 'Lỗi xóa khuyến mãi');
-        }
-    } catch (err) { alert(err.message); }
-}
-
 // ── LOYALTY / KHTT ────────────────────────────────────────────
+
+let _loyaltyData = [];
 
 async function loadLoyaltyTab() {
     try {
         const res = await API.get('loyalty_balance.php?limit=50');
-        const tbody = document.getElementById('loyaltyListBody');
-        tbody.innerHTML = '';
-        if (res?.success && res.data?.length) {
-            res.data.forEach(c => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><strong>${c.name}</strong></td>
-                    <td>${c.phone}</td>
-                    <td><strong style="color:var(--amber);">${c.points_balance} điểm</strong></td>`;
-                tbody.appendChild(tr);
-            });
-        } else {
-            tbody.innerHTML = emptyRow(3, 'Chưa có khách hàng thân thiết.');
-        }
+        _loyaltyData = (res?.success && res.data?.length) ? res.data : [];
+        filterLoyaltyList();
     } catch (err) { console.error('loadLoyaltyTab:', err); }
 }
 
-async function searchLoyaltyCustomer() {
-    const phone = document.getElementById('loyaltySearchPhone').value.trim();
-    if (!phone) return;
-    const resultEl = document.getElementById('loyaltySearchResult');
-    const emptyEl  = document.getElementById('loyaltySearchEmpty');
-    resultEl.style.display = 'none';
-    emptyEl.style.display  = 'none';
-    try {
-        const res = await API.get(`loyalty_balance.php?phone=${encodeURIComponent(phone)}`);
-        if (res?.success && res.data) {
-            const c = res.data;
-            document.getElementById('loyaltyResultName').textContent   = c.name;
-            document.getElementById('loyaltyResultPhone').textContent  = c.phone;
-            document.getElementById('loyaltyResultPoints').textContent = c.points_balance;
-            document.getElementById('loyaltyResultValue').textContent  = formatVND(c.points_balance * 1000);
-            resultEl.style.display = 'block';
-        } else {
-            emptyEl.style.display = 'block';
-        }
-    } catch (err) { emptyEl.style.display = 'block'; }
+function filterLoyaltyList() {
+    const q = (document.getElementById('loyaltySearchPhone')?.value || '').trim().toLowerCase();
+    const tbody = document.getElementById('loyaltyListBody');
+    tbody.innerHTML = '';
+    const rows = q ? _loyaltyData.filter(c => c.phone?.toLowerCase().includes(q)) : _loyaltyData;
+    if (rows.length) {
+        rows.forEach(c => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${c.name}</strong></td>
+                <td>${c.phone}</td>
+                <td><strong style="color:var(--amber);">${c.points_balance} điểm</strong></td>`;
+            tbody.appendChild(tr);
+        });
+    } else {
+        tbody.innerHTML = emptyRow(3, q ? 'Không tìm thấy khách hàng.' : 'Chưa có khách hàng thân thiết.');
+    }
 }
 
 // ── EVENT LISTENERS ────────────────────────────────────────────
@@ -623,18 +553,9 @@ function setupEventListeners() {
         if (btn) loadPeriodReport(btn.dataset.period);
     });
 
-    // Promotions (manager)
-    document.getElementById('openAddMgrPromoBtn').addEventListener('click', () => openMgrPromoModal());
-    document.getElementById('closeMgrPromoModal').addEventListener('click', () => document.getElementById('mgrPromoModal').classList.remove('show'));
-    document.getElementById('cancelMgrPromoBtn').addEventListener('click', () => document.getElementById('mgrPromoModal').classList.remove('show'));
-    document.getElementById('saveMgrPromoBtn').addEventListener('click', saveMgrPromo);
-
     // Loyalty
     document.getElementById('refreshLoyaltyBtn').addEventListener('click', loadLoyaltyTab);
-    document.getElementById('loyaltySearchBtn').addEventListener('click', searchLoyaltyCustomer);
-    document.getElementById('loyaltySearchPhone').addEventListener('keydown', e => {
-        if (e.key === 'Enter') searchLoyaltyCustomer();
-    });
+    document.getElementById('loyaltySearchPhone').addEventListener('input', filterLoyaltyList);
 }
 
 function switchTab(tabId) {
@@ -645,16 +566,14 @@ function switchTab(tabId) {
         b.classList.toggle('active', b.dataset.target === tabId);
     });
     const titles = {
-        'dashboard-tab':   'Tổng quan chi nhánh',
-        'inventory-tab':   'Quản lý kho hàng',
         'reports-tab':     'Báo cáo doanh thu',
+        'inventory-tab':   'Quản lý kho hàng',
         'menu-tab':        'Quản lý thực đơn',
         'staff-tab':       'Quản lý nhân viên',
         'promotions-tab':  'Khuyến mãi chi nhánh',
         'loyalty-tab':     'Khách hàng thân thiết',
     };
     document.getElementById('currentTabTitle').textContent = titles[tabId] || '';
-    if (tabId === 'dashboard-tab')  loadDashboardTab();
     if (tabId === 'inventory-tab')  loadInventoryTab();
     if (tabId === 'reports-tab')    loadReportsTab();
     if (tabId === 'menu-tab')       loadMenuTab();

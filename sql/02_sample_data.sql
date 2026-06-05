@@ -1,13 +1,14 @@
 -- =============================================================
 -- FILE  : 02_sample_data.sql
 -- DESC  : Sample data — Coffee POS Coffee Shop Chain
---         2 branches · 7 staff + shift_schedule · 5 customers
---         13 menu items · 22 orders (Completed / Cancelled)
+--         2 branches · 7 staff · 5 customers
+--         13 menu items · 20 orders (Completed / Cancelled)
 -- Business rules reflected:
 --   * No dining_table — takeaway / pickup only
 --   * order_status ∈ {Completed, Cancelled}
 --   * Loyalty: earn floor(total/1000) pts; redeem 1pt = 1,000đ
 --   * cancel_pin stored per branch
+--   * No shift_schedule data (feature removed)
 -- =============================================================
 
 USE final;
@@ -29,38 +30,6 @@ INSERT INTO staff (staff_id, location_id, name, role, phone, is_active, password
     (6, 1, 'Minh Hoang',    'Barista',      '090-111-0006', 1, '$2y$12$XJQDmu4AbwncGfuiGyTVYuZSwC1sU.80gPs6Qn5fxXfu/laWFBrSa'),
     (7, 2, 'Lan Vo',        'Barista',      '090-111-0007', 1, '$2y$12$XJQDmu4AbwncGfuiGyTVYuZSwC1sU.80gPs6Qn5fxXfu/laWFBrSa'),
     (8, 2, 'Duy Tran',      'Barista',      '090-111-0008', 1, '$2y$12$XJQDmu4AbwncGfuiGyTVYuZSwC1sU.80gPs6Qn5fxXfu/laWFBrSa');
-
--- ── shift_schedule ────────────────────────────────────────────
-INSERT INTO shift_schedule (staff_id, location_id, shift_type, day_of_week) VALUES
-    -- Kevin Le (Downtown Barista)
-    (5, 1, 'morning',   'Mon'),
-    (5, 1, 'morning',   'Tue'),
-    (5, 1, 'morning',   'Wed'),
-    (5, 1, 'morning',   'Thu'),
-    (5, 1, 'morning',   'Fri'),
-    -- Minh Hoang (Downtown Barista)
-    (6, 1, 'afternoon', 'Mon'),
-    (6, 1, 'afternoon', 'Tue'),
-    (6, 1, 'afternoon', 'Wed'),
-    (6, 1, 'afternoon', 'Thu'),
-    (6, 1, 'full_day',  'Sat'),
-    -- Lan Vo (Airport Barista)
-    (7, 2, 'morning',   'Mon'),
-    (7, 2, 'morning',   'Wed'),
-    (7, 2, 'morning',   'Fri'),
-    (7, 2, 'morning',   'Sun'),
-    -- Duy Tran (Airport Barista)
-    (8, 2, 'afternoon', 'Tue'),
-    (8, 2, 'afternoon', 'Thu'),
-    (8, 2, 'full_day',  'Sat'),
-    -- Sarah Nguyen (Downtown SM)
-    (2, 1, 'full_day',  'Mon'),
-    (2, 1, 'full_day',  'Wed'),
-    (2, 1, 'full_day',  'Fri'),
-    -- Tom Pham (Airport SM)
-    (3, 2, 'full_day',  'Tue'),
-    (3, 2, 'full_day',  'Thu'),
-    (3, 2, 'full_day',  'Sat');
 
 -- ── customer ──────────────────────────────────────────────────
 INSERT INTO customer (customer_id, name, email, phone, loyalty_points) VALUES
@@ -156,9 +125,10 @@ INSERT INTO ingredient (ingredient_id, location_id, name, stock_level, unit, low
     (22, 2, 'Blueberry muffin', 6.00, 'unit',  4.00);
 
 -- ── promotion ─────────────────────────────────────────────────
-INSERT INTO promotion (promotion_id, name, discount_type, discount_value, start_date, end_date, is_active) VALUES
-    (1, 'Happy Hour 10% Off',  'percent', 10.00,    '2026-01-01', '2026-12-31', 1),
-    (2, 'First Order 20k Off', 'fixed',   20000.00, '2026-01-01', '2026-06-30', 0);
+-- location_id NULL = chain-wide; number = branch-specific
+INSERT INTO promotion (promotion_id, name, discount_type, discount_value, start_date, end_date, is_active, location_id) VALUES
+    (1, 'Happy Hour 10% Off',  'percent', 10.00,    '2026-01-01', '2026-12-31', 1, NULL),
+    (2, 'First Order 20k Off', 'fixed',   20000.00, '2026-01-01', '2026-06-30', 0, NULL);
 
 -- ── orders ────────────────────────────────────────────────────
 -- All orders: Completed (paid at counter) or Cancelled (voided with PIN)

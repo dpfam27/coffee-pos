@@ -201,6 +201,8 @@ CREATE TABLE ingredient (
 ) ENGINE=InnoDB;
 
 -- ── 15. promotion ─────────────────────────────────────────────
+-- location_id NULL  = chain-wide promo (Admin only)
+-- location_id = n   = branch-specific promo (Admin or StoreManager of that branch)
 DROP TABLE IF EXISTS promotion;
 CREATE TABLE promotion (
     promotion_id   INT           NOT NULL AUTO_INCREMENT,
@@ -210,7 +212,10 @@ CREATE TABLE promotion (
     start_date     DATE          NOT NULL,
     end_date       DATE          NOT NULL,
     is_active      TINYINT(1)    NOT NULL DEFAULT 1,
-    PRIMARY KEY (promotion_id)
+    location_id    INT           NULL DEFAULT NULL,
+    PRIMARY KEY (promotion_id),
+    CONSTRAINT fk_promo_location
+        FOREIGN KEY (location_id) REFERENCES location(location_id)
 ) ENGINE=InnoDB;
 
 -- ── 16. order_promotion ───────────────────────────────────────

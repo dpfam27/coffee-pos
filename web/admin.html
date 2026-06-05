@@ -28,12 +28,12 @@
                 </div>
             </div>
             <ul class="sidebar-menu">
-                <li><button class="menu-item-btn active" data-target="overview-tab"><i class="fa-solid fa-chart-line"></i><span>Tổng quan chuỗi</span></button></li>
+                <li><button class="menu-item-btn active" data-target="reports-tab"><i class="fa-solid fa-chart-pie"></i><span>Báo cáo doanh thu</span></button></li>
                 <li><button class="menu-item-btn" data-target="branches-tab"><i class="fa-solid fa-network-wired"></i><span>Chi nhánh</span></button></li>
                 <li><button class="menu-item-btn" data-target="staff-tab"><i class="fa-solid fa-users"></i><span>Nhân viên</span></button></li>
                 <li><button class="menu-item-btn" data-target="promotions-tab"><i class="fa-solid fa-tags"></i><span>Khuyến mãi</span></button></li>
-                <li><button class="menu-item-btn" data-target="reports-tab"><i class="fa-solid fa-chart-pie"></i><span>Báo cáo doanh thu</span></button></li>
                 <li><button class="menu-item-btn" data-target="order-history-tab"><i class="fa-solid fa-clock-rotate-left"></i><span>Lịch sử đơn hàng</span></button></li>
+                <li><button class="menu-item-btn" data-target="loyalty-tab"><i class="fa-solid fa-award"></i><span>Khách hàng thân thiết</span></button></li>
                 <li><button class="menu-item-btn" data-target="audit-log-tab"><i class="fa-solid fa-shield-halved"></i><span>Nhật ký hệ thống</span></button></li>
             </ul>
             <div class="sidebar-footer">
@@ -45,7 +45,7 @@
 
         <main class="main-content">
             <header class="top-bar">
-                <div class="top-bar-title"><h3 id="currentTabTitle">Tổng quan chuỗi</h3></div>
+                <div class="top-bar-title"><h3 id="currentTabTitle">Báo cáo doanh thu</h3></div>
                 <div class="top-bar-meta">
                     <div class="meta-item"><i class="fa-solid fa-user-shield"></i><span>Hệ thống chuỗi POS</span></div>
                     <div class="meta-item"><i class="fa-regular fa-calendar-days"></i><span id="currentTime">00:00:00</span></div>
@@ -54,8 +54,8 @@
 
             <div class="content-body">
 
-                <!-- Tab 1: Overview -->
-                <section id="overview-tab" class="view-section active">
+                <!-- Tab 1: Overview (ẩn — không còn dùng làm màn mặc định) -->
+                <section id="overview-tab" class="view-section">
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-info"><div class="stat-label">Doanh thu toàn chuỗi</div><div class="stat-value" id="chainRevenue">0đ</div></div>
@@ -141,8 +141,8 @@
                     </div>
                 </section>
 
-                <!-- Tab 5: Reports (gộp doanh thu theo món + theo thời gian) -->
-                <section id="reports-tab" class="view-section">
+                <!-- Tab 5: Reports (gộp doanh thu theo món + theo thời gian) — màn mặc định -->
+                <section id="reports-tab" class="view-section active">
                     <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:20px;">
                         <div class="table-container">
                             <div class="table-header-bar"><h4>Doanh thu theo món (Toàn chuỗi)</h4></div>
@@ -194,6 +194,45 @@
                         </div>
                     </div>
                 </section>
+
+                <!-- Tab: Loyalty / KHTT -->
+                <section id="loyalty-tab" class="view-section">
+                    <div class="table-container">
+                        <div class="table-header-bar">
+                            <h4>Khách hàng thân thiết (Toàn chuỗi)</h4>
+                            <div style="display:flex;gap:8px;align-items:center;">
+                                <input type="text" id="adminLoyaltySearch" class="form-control" placeholder="Tìm theo SĐT..." style="width:200px;">
+                                <button class="btn btn-secondary" id="refreshLoyaltyBtn"><i class="fa-solid fa-arrows-rotate"></i></button>
+                            </div>
+                        </div>
+                        <table class="custom-table">
+                            <thead><tr><th>Tên khách hàng</th><th>SĐT</th><th>Điểm tích lũy</th><th>Quy đổi</th><th>Thao tác</th></tr></thead>
+                            <tbody id="adminLoyaltyBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Modal chỉnh điểm -->
+                <div class="modal" id="loyaltyEditModal">
+                    <div class="modal-content" style="max-width:400px;">
+                        <div class="modal-header">
+                            <h3>Chỉnh điểm tích lũy</h3>
+                            <button class="modal-close" id="closeLoyaltyEditModal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <p id="loyaltyEditName" style="font-weight:600;margin-bottom:4px;"></p>
+                            <p id="loyaltyEditPhone" style="font-size:12px;color:var(--t2);margin-bottom:16px;"></p>
+                            <div class="form-group" style="margin-bottom:14px;">
+                                <label style="font-size:.8rem;">Điểm tích lũy mới <span style="color:var(--red);">*</span></label>
+                                <input type="number" id="loyaltyEditPoints" class="form-control" min="0" style="padding:9px 12px;font-size:.875rem;">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" id="cancelLoyaltyEditBtn">Hủy</button>
+                            <button class="btn btn-primary" id="saveLoyaltyEditBtn">Lưu</button>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Tab 8: Audit Log -->
                 <section id="audit-log-tab" class="view-section">

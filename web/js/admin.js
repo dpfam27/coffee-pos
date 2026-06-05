@@ -29,7 +29,7 @@ async function initApp() {
         }
         setInterval(updateClock, 1000);
         updateClock();
-        await loadOverviewTab();
+        await loadReportsTab();
     } catch (err) {
         console.error('Init Error:', err);
     }
@@ -627,8 +627,76 @@ function setupEventListeners() {
     document.getElementById('refreshOrderHistoryBtn').addEventListener('click', loadOrderHistoryTab);
     document.getElementById('orderHistoryBranchFilter').addEventListener('change', e => renderOrderHistoryTable(e.target.value));
 
+    // Loyalty tab
+    document.getElementById('refreshLoyaltyBtn').addEventListener('click', loadLoyaltyTab);
+    document.getElementById('adminLoyaltySearch').addEventListener('input', filterAdminLoyalty);
+    document.getElementById('closeLoyaltyEditModal').addEventListener('click', () => document.getElementById('loyaltyEditModal').classList.remove('show'));
+    document.getElementById('cancelLoyaltyEditBtn').addEventListener('click', () => document.getElementById('loyaltyEditModal').classList.remove('show'));
+    document.getElementById('saveLoyaltyEditBtn').addEventListener('click', saveLoyaltyEdit);
+
     // Audit Log tab
     document.getElementById('refreshAuditLogBtn').addEventListener('click', loadAuditLogTab);
+}
+
+// ── LOYALTY ────────────────────────────────────────────────────
+
+let _adminLoyaltyData = [];
+let _editingLoyaltyId = null;
+
+async function loadLoyaltyTab() {
+    try {
+        const res = await API.get('loyalty_balance.php?limit=200');
+        _adminLoyaltyData = (res?.success && res.data?.length) ? res.data : [];
+        filterAdminLoyalty();
+    } catch (err) { console.error('loadLoyaltyTab:', err); }
+}
+
+function filterAdminLoyalty() {
+    const q = (document.getElementById('adminLoyaltySearch')?.value || '').trim().toLowerCase();
+    const tbody = document.getElementById('adminLoyaltyBody');
+    tbody.innerHTML = '';
+    const rows = q ? _adminLoyaltyData.filter(c => c.phone?.toLowerCase().includes(q)) : _adminLoyaltyData;
+    if (!rows.length) {
+        tbody.innerHTML = emptyRow(5, q ? 'Không tìm thấy khách hàng.' : 'Chưa có khách hàng thân thiết.');
+        return;
+    }
+    rows.forEach(c => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><strong>${c.name}</strong></td>
+            <td>${c.phone}</td>
+            <td><strong style="color:var(--amber);">${c.points_balance} điểm</strong></td>
+            <td style="color:var(--t2);">${formatVND(c.points_balance * 1000)}</td>
+            <td>
+                <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px;"
+                    onclick="openLoyaltyEditModal(${c.customer_id},'${c.name.replace(/'/g,"\\'")}','${c.phone}',${c.points_balance})">
+                    <i class="fa-solid fa-pen"></i> Chỉnh điểm
+                </button>
+            </td>`;
+        tbody.appendChild(tr);
+    });
+}
+
+function openLoyaltyEditModal(id, name, phone, points) {
+    _editingLoyaltyId = id;
+    document.getElementById('loyaltyEditName').textContent  = name;
+    document.getElementById('loyaltyEditPhone').textContent = phone;
+    document.getElementById('loyaltyEditPoints').value      = points;
+    document.getElementById('loyaltyEditModal').classList.add('show');
+}
+
+async function saveLoyaltyEdit() {
+    const pts = parseInt(document.getElementById('loyaltyEditPoints').value);
+    if (isNaN(pts) || pts < 0) return alert('Điểm không hợp lệ.');
+    try {
+        const res = await API.put(`loyalty_balance.php?id=${_editingLoyaltyId}`, { points_balance: pts });
+        if (res?.success) {
+            document.getElementById('loyaltyEditModal').classList.remove('show');
+            loadLoyaltyTab();
+        } else {
+            alert(res?.error || 'Lỗi khi lưu.');
+        }
+    } catch (err) { alert('Lỗi kết nối.'); }
 }
 
 function switchTab(tabId) {
@@ -639,21 +707,21 @@ function switchTab(tabId) {
         b.classList.toggle('active', b.dataset.target === tabId);
     });
     const titles = {
-        'overview-tab':      'Tổng quan chuỗi',
+        'reports-tab':       'Báo cáo doanh thu',
         'branches-tab':      'Quản lý chi nhánh',
         'promotions-tab':    'Quản lý khuyến mãi',
         'staff-tab':         'Quản lý nhân viên',
-        'reports-tab':       'Báo cáo doanh thu',
         'order-history-tab': 'Lịch sử đơn hàng — Toàn chuỗi',
+        'loyalty-tab':       'Khách hàng thân thiết',
         'audit-log-tab':     'Nhật ký hệ thống',
     };
     document.getElementById('currentTabTitle').textContent = titles[tabId] || '';
-    if (tabId === 'overview-tab')      loadOverviewTab();
     if (tabId === 'branches-tab')      loadBranchesTab();
     if (tabId === 'promotions-tab')    loadPromotionsTab();
     if (tabId === 'staff-tab')         loadStaffTab();
     if (tabId === 'reports-tab')       loadReportsTab();
     if (tabId === 'order-history-tab') loadOrderHistoryTab();
+    if (tabId === 'loyalty-tab')       loadLoyaltyTab();
     if (tabId === 'audit-log-tab')     loadAuditLogTab();
 }
 

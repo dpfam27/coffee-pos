@@ -28,9 +28,8 @@
                 </div>
             </div>
             <ul class="sidebar-menu">
-                <li><button class="menu-item-btn active" data-target="dashboard-tab"><i class="fa-solid fa-chart-line"></i><span>Tổng quan chi nhánh</span></button></li>
+                <li><button class="menu-item-btn active" data-target="reports-tab"><i class="fa-solid fa-chart-pie"></i><span>Báo cáo doanh thu</span></button></li>
                 <li><button class="menu-item-btn" data-target="inventory-tab"><i class="fa-solid fa-warehouse"></i><span>Quản lý kho hàng</span></button></li>
-                <li><button class="menu-item-btn" data-target="reports-tab"><i class="fa-solid fa-chart-pie"></i><span>Báo cáo doanh thu</span></button></li>
                 <li><button class="menu-item-btn" data-target="menu-tab"><i class="fa-solid fa-utensils"></i><span>Quản lý thực đơn</span></button></li>
                 <li><button class="menu-item-btn" data-target="staff-tab"><i class="fa-solid fa-users"></i><span>Nhân viên</span></button></li>
                 <li><button class="menu-item-btn" data-target="promotions-tab"><i class="fa-solid fa-tags"></i><span>Khuyến mãi</span></button></li>
@@ -45,7 +44,7 @@
 
         <main class="main-content">
             <header class="top-bar">
-                <div class="top-bar-title"><h3 id="currentTabTitle">Tổng quan chi nhánh</h3></div>
+                <div class="top-bar-title"><h3 id="currentTabTitle">Báo cáo doanh thu</h3></div>
                 <div class="top-bar-meta">
                     <div class="meta-item"><i class="fa-solid fa-shop"></i><span id="currentBranch">Chi nhánh...</span></div>
                     <div class="meta-item"><i class="fa-regular fa-calendar-days"></i><span id="currentTime">00:00:00</span></div>
@@ -54,8 +53,8 @@
 
             <div class="content-body">
 
-                <!-- Tab 1: Dashboard -->
-                <section id="dashboard-tab" class="view-section active">
+                <!-- Tab 1: Dashboard (ẩn — không còn dùng làm màn mặc định) -->
+                <section id="dashboard-tab" class="view-section">
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-info"><div class="stat-label">Doanh thu hôm nay</div><div class="stat-value" id="branchRevenue">0đ</div></div>
@@ -89,8 +88,8 @@
                     </div>
                 </section>
 
-                <!-- Tab 3: Reports -->
-                <section id="reports-tab" class="view-section">
+                <!-- Tab 3: Reports — màn mặc định -->
+                <section id="reports-tab" class="view-section active">
                     <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:20px;">
                         <div class="table-container">
                             <div class="table-header-bar"><h4>Doanh thu theo sản phẩm</h4></div>
@@ -161,13 +160,10 @@
                 <section id="promotions-tab" class="view-section">
                     <div class="table-container">
                         <div class="table-header-bar">
-                            <h4>Khuyến mãi chi nhánh</h4>
-                            <button class="btn btn-primary" id="openAddMgrPromoBtn" style="padding:8px 16px;font-size:.85rem;">
-                                <i class="fa-solid fa-plus"></i> Thêm khuyến mãi
-                            </button>
+                            <h4>Khuyến mãi áp dụng tại chi nhánh</h4>
                         </div>
                         <table class="custom-table">
-                            <thead><tr><th>Tên chương trình</th><th>Hình thức</th><th>Giá trị</th><th>Bắt đầu</th><th>Kết thúc</th><th>Phạm vi</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+                            <thead><tr><th>Tên chương trình</th><th>Hình thức</th><th>Giá trị</th><th>Bắt đầu</th><th>Kết thúc</th><th>Phạm vi</th><th>Trạng thái</th></tr></thead>
                             <tbody id="mgrPromotionsTableBody"></tbody>
                         </table>
                     </div>
@@ -175,43 +171,18 @@
 
                 <!-- Tab 7: Loyalty / KHTT -->
                 <section id="loyalty-tab" class="view-section">
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
-                        <div class="table-container">
-                            <div class="table-header-bar">
-                                <h4>Danh sách KHTT</h4>
+                    <div class="table-container">
+                        <div class="table-header-bar">
+                            <h4>Danh sách KHTT</h4>
+                            <div style="display:flex;gap:8px;align-items:center;">
+                                <input type="text" id="loyaltySearchPhone" class="form-control" placeholder="Tìm theo SĐT..." style="width:200px;">
                                 <button class="btn btn-secondary" id="refreshLoyaltyBtn"><i class="fa-solid fa-arrows-rotate"></i></button>
                             </div>
-                            <table class="custom-table">
-                                <thead><tr><th>Tên khách hàng</th><th>SĐT</th><th>Điểm tích lũy</th></tr></thead>
-                                <tbody id="loyaltyListBody"></tbody>
-                            </table>
                         </div>
-                        <div class="table-container">
-                            <div class="table-header-bar"><h4>Tra cứu khách hàng</h4></div>
-                            <div style="padding:16px;display:flex;flex-direction:column;gap:12px;">
-                                <div style="display:flex;gap:8px;">
-                                    <input type="text" id="loyaltySearchPhone" class="form-control" placeholder="Nhập số điện thoại...">
-                                    <button class="btn btn-primary" id="loyaltySearchBtn"><i class="fa-solid fa-magnifying-glass"></i></button>
-                                </div>
-                                <div id="loyaltySearchResult" style="display:none;background:var(--s3);border:1px solid var(--b2);border-radius:var(--r2);padding:16px;">
-                                    <div style="font-size:13px;font-weight:600;" id="loyaltyResultName">—</div>
-                                    <div style="font-size:12px;color:var(--t2);margin-top:2px;" id="loyaltyResultPhone">—</div>
-                                    <div style="margin-top:12px;display:flex;align-items:center;gap:10px;">
-                                        <i class="fa-solid fa-award" style="color:var(--amber);font-size:20px;"></i>
-                                        <div>
-                                            <div style="font-size:22px;font-weight:700;color:var(--amber);" id="loyaltyResultPoints">0</div>
-                                            <div style="font-size:11px;color:var(--t2);">điểm tích lũy</div>
-                                        </div>
-                                        <div style="margin-left:auto;font-size:12px;color:var(--t2);">
-                                            = <strong style="color:var(--t1);" id="loyaltyResultValue">0đ</strong>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div id="loyaltySearchEmpty" style="display:none;color:var(--t2);font-size:13px;text-align:center;padding:20px;">
-                                    <i class="fa-solid fa-user-slash"></i> Không tìm thấy khách hàng.
-                                </div>
-                            </div>
-                        </div>
+                        <table class="custom-table">
+                            <thead><tr><th>Tên khách hàng</th><th>SĐT</th><th>Điểm tích lũy</th></tr></thead>
+                            <tbody id="loyaltyListBody"></tbody>
+                        </table>
                     </div>
                 </section>
 
@@ -350,53 +321,6 @@
             <div class="modal-footer">
                 <button class="btn btn-secondary" id="cancelMgrStaffBtn">Hủy</button>
                 <button class="btn btn-primary" id="saveMgrStaffBtn"><i class="fa-solid fa-floppy-disk"></i> Lưu</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal: Promotion (Manager — chi nhánh mình) -->
-    <div class="modal" id="mgrPromoModal">
-        <div class="modal-content" style="max-width:480px;">
-            <div class="modal-header">
-                <h3 id="mgrPromoModalTitle">Thêm khuyến mãi mới</h3>
-                <button class="modal-close" id="closeMgrPromoModal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group" style="margin-bottom:14px;">
-                    <label style="font-size:.8rem;">Tên chương trình <span style="color:var(--red);">*</span></label>
-                    <input type="text" id="mgrPromoName" class="form-control" placeholder="VD: Happy Hour Chiều" style="padding:9px 12px;font-size:.875rem;">
-                </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
-                    <div class="form-group">
-                        <label style="font-size:.8rem;">Hình thức giảm <span style="color:var(--red);">*</span></label>
-                        <select id="mgrPromoType" class="form-control" style="padding:9px 12px;font-size:.875rem;">
-                            <option value="percent">Giảm % (phần trăm)</option>
-                            <option value="fixed">Giảm tiền mặt (VND)</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label style="font-size:.8rem;">Giá trị giảm <span style="color:var(--red);">*</span></label>
-                        <input type="number" id="mgrPromoValue" class="form-control" placeholder="VD: 10 hoặc 5000" min="0" style="padding:9px 12px;font-size:.875rem;">
-                    </div>
-                </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
-                    <div class="form-group">
-                        <label style="font-size:.8rem;">Ngày bắt đầu <span style="color:var(--red);">*</span></label>
-                        <input type="date" id="mgrPromoStartDate" class="form-control" style="padding:9px 12px;font-size:.875rem;">
-                    </div>
-                    <div class="form-group">
-                        <label style="font-size:.8rem;">Ngày kết thúc <span style="color:var(--red);">*</span></label>
-                        <input type="date" id="mgrPromoEndDate" class="form-control" style="padding:9px 12px;font-size:.875rem;">
-                    </div>
-                </div>
-                <div class="form-group" style="display:flex;align-items:center;gap:10px;">
-                    <input type="checkbox" id="mgrPromoIsActive" checked style="width:16px;height:16px;cursor:pointer;">
-                    <label for="mgrPromoIsActive" style="font-size:.85rem;cursor:pointer;margin:0;">Kích hoạt ngay</label>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" id="cancelMgrPromoBtn">Hủy</button>
-                <button class="btn btn-primary" id="saveMgrPromoBtn"><i class="fa-solid fa-floppy-disk"></i> Lưu</button>
             </div>
         </div>
     </div>
