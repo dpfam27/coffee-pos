@@ -46,7 +46,7 @@ erDiagram
         int     staff_id    PK
         int     location_id FK
         varchar name
-        enum    role "Admin|StoreManager|ShiftLead|Barista"
+        enum    role "Admin|StoreManager|Barista"
         varchar phone
     }
 

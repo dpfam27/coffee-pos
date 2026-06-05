@@ -18,7 +18,7 @@ try {
                COUNT(order_id) as total_orders, 
                AVG(total_amount) as avg_ticket 
         FROM   orders 
-        WHERE  order_status = 'Paid'
+        WHERE  order_status = 'Completed'
     ");
     $stats = $stats_res->fetch_assoc();
     

@@ -21,7 +21,7 @@ $sql = "
     JOIN   modifier_group  mg ON mg.group_id       = mo.group_id
     JOIN   order_item      oi ON oi.order_item_id  = oim.order_item_id
     JOIN   orders          o  ON o.order_id        = oi.order_id
-    WHERE  o.order_status = 'Paid'
+    WHERE  o.order_status = 'Completed'
       AND  o.order_date  >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
     GROUP BY mo.option_id, mg.group_name, mo.option_name
     ORDER BY extra_revenue DESC

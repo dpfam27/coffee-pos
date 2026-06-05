@@ -20,7 +20,7 @@ try {
             SUM(CASE WHEN o.location_id = 1 THEN o.total_amount ELSE 0 END) AS downtown_revenue,
             SUM(CASE WHEN o.location_id = 2 THEN o.total_amount ELSE 0 END) AS airport_revenue
         FROM   orders o
-        WHERE  o.order_status = 'Paid'
+        WHERE  o.order_status = 'Completed'
         GROUP BY DATE(o.order_date)
         ORDER BY sale_date DESC
         LIMIT 30

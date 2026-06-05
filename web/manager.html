@@ -3,14 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Store Manager | Antigravity POS</title>
-    <!-- Google Fonts -->
+    <title>Store Manager | Coffee POS</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <!-- FontAwesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- CSS Style -->
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -18,219 +15,203 @@
     <div class="bg-glow bg-glow-2"></div>
 
     <div class="app-container">
-        <!-- Sidebar Navigation -->
         <aside class="sidebar">
             <div class="sidebar-header">
                 <i class="fa-solid fa-mug-hot"></i>
-                <h2>Antigravity POS</h2>
+                <h2>Coffee POS</h2>
             </div>
-
             <div class="sidebar-user">
                 <div class="user-avatar" id="userAvatar">M</div>
                 <div class="user-info">
-                    <div class="name" id="userName">Manager Name</div>
-                    <div class="role-badge" id="userRole">Store Manager</div>
+                    <div class="name" id="userName">Manager</div>
+                    <div class="role-badge" id="userRole">Cửa hàng trưởng</div>
                 </div>
             </div>
-
             <ul class="sidebar-menu">
-                <li>
-                    <button class="menu-item-btn active" data-target="dashboard-tab">
-                        <i class="fa-solid fa-chart-line"></i>
-                        <span>Tổng quan chi nhánh</span>
-                    </button>
-                </li>
-                <li>
-                    <button class="menu-item-btn" data-target="inventory-tab">
-                        <i class="fa-solid fa-warehouse"></i>
-                        <span>Quản lý kho hàng</span>
-                    </button>
-                </li>
-                <li>
-                    <button class="menu-item-btn" data-target="reports-tab">
-                        <i class="fa-solid fa-chart-pie"></i>
-                        <span>Báo cáo doanh số</span>
-                    </button>
-                </li>
-                <li>
-                    <button class="menu-item-btn" data-target="staff-tab">
-                        <i class="fa-solid fa-users"></i>
-                        <span>Nhân viên & Ca trực</span>
-                    </button>
-                </li>
+                <li><button class="menu-item-btn active" data-target="dashboard-tab"><i class="fa-solid fa-chart-line"></i><span>Tổng quan chi nhánh</span></button></li>
+                <li><button class="menu-item-btn" data-target="inventory-tab"><i class="fa-solid fa-warehouse"></i><span>Quản lý kho hàng</span></button></li>
+                <li><button class="menu-item-btn" data-target="reports-tab"><i class="fa-solid fa-chart-pie"></i><span>Báo cáo doanh thu</span></button></li>
+                <li><button class="menu-item-btn" data-target="menu-tab"><i class="fa-solid fa-utensils"></i><span>Quản lý thực đơn</span></button></li>
+                <li><button class="menu-item-btn" data-target="staff-tab"><i class="fa-solid fa-users"></i><span>Nhân viên</span></button></li>
+                <li><button class="menu-item-btn" data-target="promotions-tab"><i class="fa-solid fa-tags"></i><span>Khuyến mãi</span></button></li>
+                <li><button class="menu-item-btn" data-target="loyalty-tab"><i class="fa-solid fa-award"></i><span>Khách hàng thân thiết</span></button></li>
             </ul>
-
             <div class="sidebar-footer">
                 <button class="logout-btn" id="logoutBtn">
-                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                    <span>Đăng xuất</span>
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i><span>Đăng xuất</span>
                 </button>
             </div>
         </aside>
 
-        <!-- Main Content Area -->
         <main class="main-content">
-            <!-- Top Bar -->
             <header class="top-bar">
-                <div class="top-bar-title">
-                    <h3 id="currentTabTitle">Tổng quan chi nhánh</h3>
-                </div>
+                <div class="top-bar-title"><h3 id="currentTabTitle">Tổng quan chi nhánh</h3></div>
                 <div class="top-bar-meta">
-                    <div class="meta-item">
-                        <i class="fa-solid fa-shop"></i>
-                        <span id="currentBranch">Chi nhánh...</span>
-                    </div>
-                    <div class="meta-item">
-                        <i class="fa-regular fa-calendar-days"></i>
-                        <span id="currentTime">00:00:00</span>
-                    </div>
+                    <div class="meta-item"><i class="fa-solid fa-shop"></i><span id="currentBranch">Chi nhánh...</span></div>
+                    <div class="meta-item"><i class="fa-regular fa-calendar-days"></i><span id="currentTime">00:00:00</span></div>
                 </div>
             </header>
 
-            <!-- Content Body -->
             <div class="content-body">
-                
-                <!-- Tab 1: Dashboard Overview -->
+
+                <!-- Tab 1: Dashboard -->
                 <section id="dashboard-tab" class="view-section active">
                     <div class="stats-grid">
                         <div class="stat-card">
-                            <div class="stat-info">
-                                <div class="stat-label">Doanh thu hôm nay</div>
-                                <div class="stat-value" id="branchRevenue">0đ</div>
-                            </div>
+                            <div class="stat-info"><div class="stat-label">Doanh thu hôm nay</div><div class="stat-value" id="branchRevenue">0đ</div></div>
                             <div class="stat-icon success"><i class="fa-solid fa-coins"></i></div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-info">
-                                <div class="stat-label">Tổng số đơn hàng</div>
-                                <div class="stat-value" id="branchOrderCount">0</div>
-                            </div>
+                            <div class="stat-info"><div class="stat-label">Tổng đơn hôm nay</div><div class="stat-value" id="branchOrderCount">0</div></div>
                             <div class="stat-icon primary"><i class="fa-solid fa-file-invoice-dollar"></i></div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-info">
-                                <div class="stat-label">Nguyên liệu sắp hết</div>
-                                <div class="stat-value" id="branchLowStockCount" style="color: var(--danger);">0</div>
-                            </div>
-                            <div class="stat-icon danger"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                            <div class="stat-info"><div class="stat-label">Nguyên liệu sắp hết</div><div class="stat-value" id="branchLowStockCount">0</div></div>
+                            <div class="stat-icon success" id="lowStockIcon"><i class="fa-solid fa-circle-check"></i></div>
                         </div>
-                    </div>
-
-                    <!-- Low-stock Warnings -->
-                    <div class="table-container" style="margin-bottom: 25px;">
-                        <div class="table-header-bar">
-                            <h4 style="color: var(--danger);"><i class="fa-solid fa-battery-quarter"></i> Cảnh báo hết kho</h4>
-                        </div>
-                        <table class="custom-table">
-                            <thead>
-                                <tr>
-                                    <th>Tên nguyên liệu</th>
-                                    <th>Hiện tại</th>
-                                    <th>Định mức cảnh báo</th>
-                                </tr>
-                            </thead>
-                            <tbody id="lowIngredientsBody">
-                                <!-- Dynamic low-stock ingredients -->
-                            </tbody>
-                        </table>
                     </div>
                 </section>
 
-                <!-- Tab 2: Inventory & Stock Management -->
+                <!-- Tab 2: Inventory -->
                 <section id="inventory-tab" class="view-section">
                     <div class="table-container">
                         <div class="table-header-bar">
-                            <h4>Danh sách kho nguyên vật liệu</h4>
-                            <div style="display: flex; gap: 8px;">
-                                <button class="btn btn-primary" id="addIngredientBtn"><i class="fa-solid fa-plus"></i> Thêm nguyên vật liệu</button>
+                            <h4>Kho nguyên vật liệu</h4>
+                            <div style="display:flex;gap:8px;">
+                                <button class="btn btn-primary" id="addIngredientBtn"><i class="fa-solid fa-plus"></i> Thêm NVL</button>
                                 <button class="btn btn-secondary" id="refreshInventoryBtn"><i class="fa-solid fa-arrows-rotate"></i> Làm mới</button>
                             </div>
                         </div>
                         <table class="custom-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Tên nguyên vật liệu</th>
-                                    <th>Mức tồn kho</th>
-                                    <th>Đơn vị</th>
-                                    <th>Định mức tối thiểu</th>
-                                    <th>Trạng thái kho</th>
-                                    <th>Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody id="inventoryTableBody">
-                                <!-- Dynamic inventory rows -->
-                            </tbody>
+                            <thead><tr><th>ID</th><th>Tên nguyên liệu</th><th>Tồn kho</th><th>Đơn vị</th><th>Định mức tối thiểu</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+                            <tbody id="inventoryTableBody"></tbody>
                         </table>
                     </div>
                 </section>
 
-                <!-- Tab 3: Reports & Sales Analytics -->
+                <!-- Tab 3: Reports -->
                 <section id="reports-tab" class="view-section">
-                    <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 20px;">
-                        
-                        <!-- Sales by Item -->
+                    <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:20px;">
                         <div class="table-container">
-                            <div class="table-header-bar">
-                                <h4>Doanh thu theo sản phẩm (Tháng này)</h4>
-                            </div>
+                            <div class="table-header-bar"><h4>Doanh thu theo sản phẩm</h4></div>
                             <table class="custom-table">
-                                <thead>
-                                    <tr>
-                                        <th>Tên món ăn</th>
-                                        <th>Số lượng bán</th>
-                                        <th>Doanh thu</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="salesByItemBody">
-                                    <!-- Dynamic sales by item -->
-                                </tbody>
+                                <thead><tr><th>Tên món</th><th>Số lượng</th><th>Doanh thu</th></tr></thead>
+                                <tbody id="salesByItemBody"></tbody>
                             </table>
                         </div>
-
-                        <!-- Sales by Hour -->
                         <div class="table-container">
                             <div class="table-header-bar">
-                                <h4>Doanh thu phân bổ theo khung giờ</h4>
+                                <h4>Doanh thu theo thời gian</h4>
+                                <div style="display:flex;gap:6px;">
+                                    <button class="btn btn-primary period-btn" data-period="day">Hôm nay</button>
+                                    <button class="btn btn-secondary period-btn" data-period="week">Tuần</button>
+                                    <button class="btn btn-secondary period-btn" data-period="month">Tháng</button>
+                                </div>
                             </div>
                             <table class="custom-table">
-                                <thead>
-                                    <tr>
-                                        <th>Khung giờ</th>
-                                        <th>Số đơn hàng</th>
-                                        <th>Tổng doanh thu</th>
-                                        <th>Tỷ lệ hoạt động</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="salesByHourBody">
-                                    <!-- Dynamic sales by hour -->
-                                </tbody>
+                                <thead><tr><th id="periodColHeader">Khung giờ</th><th>Số đơn</th><th>Doanh thu</th><th>Tỷ lệ</th></tr></thead>
+                                <tbody id="salesByHourBody"></tbody>
                             </table>
+                            <div style="padding:10px 16px;border-top:1px solid var(--b1);font-size:12px;color:var(--t2);display:flex;justify-content:space-between;">
+                                <span id="periodSummaryLabel">Tổng hôm nay:</span>
+                                <strong id="periodSummaryTotal" style="color:var(--amber);">0đ</strong>
+                            </div>
                         </div>
-
                     </div>
                 </section>
 
-                <!-- Tab 4: Staff Directory & Roster -->
-                <section id="staff-tab" class="view-section">
-                    <div class="table-container" style="margin-bottom: 25px;">
+                <!-- Tab 4: Menu CRUD -->
+                <section id="menu-tab" class="view-section">
+                    <div class="table-container">
                         <div class="table-header-bar">
-                            <h4>Lịch làm việc & Ca trực nhân sự</h4>
+                            <div style="display:flex;align-items:center;gap:12px;">
+                                <h4>Quản lý thực đơn</h4>
+                                <select class="form-control" id="menuCategoryFilter" style="padding:7px 12px;font-size:.85rem;min-width:160px;">
+                                    <option value="all">Tất cả danh mục</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary" id="openAddMenuItemBtn" style="padding:8px 16px;font-size:.85rem;">
+                                <i class="fa-solid fa-plus"></i> Thêm món
+                            </button>
                         </div>
                         <table class="custom-table">
-                            <thead>
-                                <tr>
-                                    <th>Nhân viên</th>
-                                    <th>Vai trò</th>
-                                    <th>SĐT</th>
-                                    <th>Ca đăng ký</th>
-                                    <th>Ngày trực ca</th>
-                                </tr>
-                            </thead>
-                            <tbody id="rosterTableBody">
-                                <!-- Dynamic roster rows -->
-                            </tbody>
+                            <thead><tr><th>ID</th><th>Tên món</th><th>Danh mục</th><th>Giá</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+                            <tbody id="menuTableBody"></tbody>
                         </table>
+                    </div>
+                </section>
+
+                <!-- Tab 5: Staff -->
+                <section id="staff-tab" class="view-section">
+                    <div class="table-container">
+                        <div class="table-header-bar">
+                            <h4>Quản lý nhân viên</h4>
+                            <button class="btn btn-primary" id="openAddMgrStaffBtn">
+                                <i class="fa-solid fa-user-plus"></i> Thêm NV
+                            </button>
+                        </div>
+                        <table class="custom-table">
+                            <thead><tr><th>Họ tên</th><th>Vai trò</th><th>SĐT</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+                            <tbody id="rosterTableBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Tab 6: Promotions (chi nhánh mình) -->
+                <section id="promotions-tab" class="view-section">
+                    <div class="table-container">
+                        <div class="table-header-bar">
+                            <h4>Khuyến mãi chi nhánh</h4>
+                            <button class="btn btn-primary" id="openAddMgrPromoBtn" style="padding:8px 16px;font-size:.85rem;">
+                                <i class="fa-solid fa-plus"></i> Thêm khuyến mãi
+                            </button>
+                        </div>
+                        <table class="custom-table">
+                            <thead><tr><th>Tên chương trình</th><th>Hình thức</th><th>Giá trị</th><th>Bắt đầu</th><th>Kết thúc</th><th>Phạm vi</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+                            <tbody id="mgrPromotionsTableBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Tab 7: Loyalty / KHTT -->
+                <section id="loyalty-tab" class="view-section">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+                        <div class="table-container">
+                            <div class="table-header-bar">
+                                <h4>Danh sách KHTT</h4>
+                                <button class="btn btn-secondary" id="refreshLoyaltyBtn"><i class="fa-solid fa-arrows-rotate"></i></button>
+                            </div>
+                            <table class="custom-table">
+                                <thead><tr><th>Tên khách hàng</th><th>SĐT</th><th>Điểm tích lũy</th></tr></thead>
+                                <tbody id="loyaltyListBody"></tbody>
+                            </table>
+                        </div>
+                        <div class="table-container">
+                            <div class="table-header-bar"><h4>Tra cứu khách hàng</h4></div>
+                            <div style="padding:16px;display:flex;flex-direction:column;gap:12px;">
+                                <div style="display:flex;gap:8px;">
+                                    <input type="text" id="loyaltySearchPhone" class="form-control" placeholder="Nhập số điện thoại...">
+                                    <button class="btn btn-primary" id="loyaltySearchBtn"><i class="fa-solid fa-magnifying-glass"></i></button>
+                                </div>
+                                <div id="loyaltySearchResult" style="display:none;background:var(--s3);border:1px solid var(--b2);border-radius:var(--r2);padding:16px;">
+                                    <div style="font-size:13px;font-weight:600;" id="loyaltyResultName">—</div>
+                                    <div style="font-size:12px;color:var(--t2);margin-top:2px;" id="loyaltyResultPhone">—</div>
+                                    <div style="margin-top:12px;display:flex;align-items:center;gap:10px;">
+                                        <i class="fa-solid fa-award" style="color:var(--amber);font-size:20px;"></i>
+                                        <div>
+                                            <div style="font-size:22px;font-weight:700;color:var(--amber);" id="loyaltyResultPoints">0</div>
+                                            <div style="font-size:11px;color:var(--t2);">điểm tích lũy</div>
+                                        </div>
+                                        <div style="margin-left:auto;font-size:12px;color:var(--t2);">
+                                            = <strong style="color:var(--t1);" id="loyaltyResultValue">0đ</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="loyaltySearchEmpty" style="display:none;color:var(--t2);font-size:13px;text-align:center;padding:20px;">
+                                    <i class="fa-solid fa-user-slash"></i> Không tìm thấy khách hàng.
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </section>
 
@@ -238,63 +219,63 @@
         </main>
     </div>
 
-    <!-- Modals -->
+    <!-- ============================================================
+         MODALS
+         ============================================================ -->
+
     <!-- Modal: Stock Adjustment -->
     <div class="modal" id="adjustmentModal">
-        <div class="modal-content" style="max-width: 440px;">
+        <div class="modal-content" style="max-width:440px;">
             <div class="modal-header">
                 <h3>Điều chỉnh kho hàng</h3>
                 <button class="modal-close" id="closeAdjustmentModal">&times;</button>
             </div>
             <div class="modal-body">
-                <h4 id="adjustingIngredientName" style="margin-bottom: 15px; color: var(--primary);">Nguyên liệu</h4>
-                
-                <div class="form-group" style="margin-bottom: 15px;">
-                    <label for="adjustActionType">Hành động điều chỉnh</label>
-                    <select id="adjustActionType" class="form-control" style="margin-top: 5px;">
+                <h4 id="adjustingIngredientName" style="margin-bottom:15px;color:var(--amber);">Nguyên liệu</h4>
+                <div class="form-group" style="margin-bottom:14px;">
+                    <label style="font-size:.8rem;">Hành động</label>
+                    <select id="adjustActionType" class="form-control" style="margin-top:5px;padding:9px 12px;">
                         <option value="add">Nhập kho thêm (+ Restock)</option>
-                        <option value="reduce">Xuất kho hao phí (- Waste/Export)</option>
-                        <option value="set">Thiết lập lại giá trị thực tế (Override)</option>
+                        <option value="reduce">Xuất kho hao phí (- Waste)</option>
+                        <option value="set">Thiết lập lại số lượng (Override)</option>
                     </select>
                 </div>
-
-                <div class="form-group" style="margin-bottom: 15px;">
-                    <label for="adjustAmount">Số lượng (<span id="adjustIngredientUnit">đơn vị</span>)</label>
-                    <input type="number" id="adjustAmount" class="form-control" placeholder="0.00" min="0" step="0.01" style="margin-top: 5px;">
+                <div class="form-group" style="margin-bottom:14px;">
+                    <label style="font-size:.8rem;">Số lượng (<span id="adjustIngredientUnit">đơn vị</span>)</label>
+                    <input type="number" id="adjustAmount" class="form-control" placeholder="0.00" min="0" step="0.01" style="margin-top:5px;padding:9px 12px;">
                 </div>
-
                 <div class="form-group">
-                    <label for="adjustReason">Lý do điều chỉnh (Bắt buộc)</label>
-                    <input type="text" id="adjustReason" class="form-control" placeholder="Nhập lý do điều chỉnh kho" style="margin-top: 5px;">
+                    <label style="font-size:.8rem;">Lý do điều chỉnh <span style="color:var(--red);">*</span></label>
+                    <input type="text" id="adjustReason" class="form-control" placeholder="Nhập lý do điều chỉnh kho" style="margin-top:5px;padding:9px 12px;">
                 </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" id="cancelAdjustmentBtn">Hủy</button>
-                <button class="btn btn-primary" id="saveAdjustmentBtn">Lưu thay đổi</button>
+                <button class="btn btn-primary" id="saveAdjustmentBtn"><i class="fa-solid fa-floppy-disk"></i> Lưu thay đổi</button>
             </div>
         </div>
     </div>
 
     <!-- Modal: Add Ingredient -->
     <div class="modal" id="addIngredientModal">
-        <div class="modal-content" style="max-width: 440px;">
+        <div class="modal-content" style="max-width:440px;">
             <div class="modal-header">
                 <h3>Thêm nguyên vật liệu mới</h3>
                 <button class="modal-close" id="closeAddIngredientModal">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="form-group" style="margin-bottom: 15px;">
-                    <label for="newIngName">Tên nguyên vật liệu</label>
-                    <input type="text" id="newIngName" class="form-control" placeholder="VD: Sữa tươi, Hạt cà phê..." style="margin-top: 5px;">
+                <div class="form-group" style="margin-bottom:14px;">
+                    <label style="font-size:.8rem;">Tên nguyên vật liệu <span style="color:var(--red);">*</span></label>
+                    <input type="text" id="newIngName" class="form-control" placeholder="VD: Sữa tươi" style="padding:9px 12px;">
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
                     <div class="form-group">
-                        <label for="newIngStock">Số lượng ban đầu</label>
-                        <input type="number" id="newIngStock" class="form-control" placeholder="0.00" min="0" step="0.01" style="margin-top: 5px;">
+                        <label style="font-size:.8rem;">Số lượng ban đầu</label>
+                        <input type="number" id="newIngStock" class="form-control" placeholder="0.00" min="0" step="0.01" style="padding:9px 12px;">
                     </div>
                     <div class="form-group">
-                        <label for="newIngUnit">Đơn vị</label>
-                        <select id="newIngUnit" class="form-control" style="margin-top: 5px;">
+                        <label style="font-size:.8rem;">Đơn vị</label>
+                        <select id="newIngUnit" class="form-control" style="padding:9px 12px;">
                             <option value="kg">kg</option>
                             <option value="liter">lít</option>
                             <option value="unit">cái / phần</option>
@@ -303,8 +284,8 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="newIngThreshold">Định mức cảnh báo thiếu kho</label>
-                    <input type="number" id="newIngThreshold" class="form-control" placeholder="VD: 2.00" min="0" step="0.01" style="margin-top: 5px;">
+                    <label style="font-size:.8rem;">Định mức cảnh báo thiếu kho</label>
+                    <input type="number" id="newIngThreshold" class="form-control" placeholder="VD: 2.00" min="0" step="0.01" style="padding:9px 12px;">
                 </div>
             </div>
             <div class="modal-footer">
@@ -314,7 +295,112 @@
         </div>
     </div>
 
-    <!-- Scripts -->
+    <!-- Modal: Menu Item -->
+    <div class="modal" id="menuItemModal">
+        <div class="modal-content" style="max-width:440px;">
+            <div class="modal-header">
+                <h3 id="menuItemModalTitle">Thêm món mới</h3>
+                <button class="modal-close" id="closeMenuItemModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group" style="margin-bottom:14px;">
+                    <label style="font-size:.8rem;">Tên món <span style="color:var(--red);">*</span></label>
+                    <input type="text" id="menuItemName" class="form-control" placeholder="VD: Cà phê sữa đá" style="padding:9px 12px;">
+                </div>
+                <div class="form-group" style="margin-bottom:14px;">
+                    <label style="font-size:.8rem;">Danh mục <span style="color:var(--red);">*</span></label>
+                    <select id="menuItemCategory" class="form-control" style="padding:9px 12px;"></select>
+                </div>
+                <div class="form-group" style="margin-bottom:14px;">
+                    <label style="font-size:.8rem;">Giá (VND) <span style="color:var(--red);">*</span></label>
+                    <input type="number" id="menuItemPrice" class="form-control" placeholder="VD: 45000" min="0" style="padding:9px 12px;">
+                </div>
+                <div class="form-group" style="display:flex;align-items:center;gap:10px;">
+                    <input type="checkbox" id="menuItemAvailable" checked style="width:16px;height:16px;cursor:pointer;">
+                    <label for="menuItemAvailable" style="font-size:.85rem;cursor:pointer;margin:0;">Đang bán (hiển thị trên POS)</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelMenuItemBtn">Hủy</button>
+                <button class="btn btn-primary" id="saveMenuItemBtn"><i class="fa-solid fa-floppy-disk"></i> Lưu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Staff (Manager adds Barista only) -->
+    <div class="modal" id="mgrStaffModal">
+        <div class="modal-content" style="max-width:420px;">
+            <div class="modal-header">
+                <h3 id="mgrStaffModalTitle">Thêm nhân viên mới</h3>
+                <button class="modal-close" id="closeMgrStaffModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group" style="margin-bottom:14px;">
+                    <label style="font-size:.8rem;">Họ và tên <span style="color:var(--red);">*</span></label>
+                    <input type="text" id="mgrStaffName" class="form-control" placeholder="VD: Nguyễn Văn An" style="padding:9px 12px;">
+                </div>
+                <div class="form-group">
+                    <label style="font-size:.8rem;">Số điện thoại</label>
+                    <input type="text" id="mgrStaffPhone" class="form-control" placeholder="VD: 0909 123 456" style="padding:9px 12px;">
+                </div>
+                <small style="color:var(--text-3);font-size:.72rem;display:block;margin-top:8px;">
+                    <i class="fa-solid fa-circle-info"></i> Mật khẩu mặc định: tên_viết_thường + "123"
+                </small>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelMgrStaffBtn">Hủy</button>
+                <button class="btn btn-primary" id="saveMgrStaffBtn"><i class="fa-solid fa-floppy-disk"></i> Lưu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Promotion (Manager — chi nhánh mình) -->
+    <div class="modal" id="mgrPromoModal">
+        <div class="modal-content" style="max-width:480px;">
+            <div class="modal-header">
+                <h3 id="mgrPromoModalTitle">Thêm khuyến mãi mới</h3>
+                <button class="modal-close" id="closeMgrPromoModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group" style="margin-bottom:14px;">
+                    <label style="font-size:.8rem;">Tên chương trình <span style="color:var(--red);">*</span></label>
+                    <input type="text" id="mgrPromoName" class="form-control" placeholder="VD: Happy Hour Chiều" style="padding:9px 12px;font-size:.875rem;">
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+                    <div class="form-group">
+                        <label style="font-size:.8rem;">Hình thức giảm <span style="color:var(--red);">*</span></label>
+                        <select id="mgrPromoType" class="form-control" style="padding:9px 12px;font-size:.875rem;">
+                            <option value="percent">Giảm % (phần trăm)</option>
+                            <option value="fixed">Giảm tiền mặt (VND)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size:.8rem;">Giá trị giảm <span style="color:var(--red);">*</span></label>
+                        <input type="number" id="mgrPromoValue" class="form-control" placeholder="VD: 10 hoặc 5000" min="0" style="padding:9px 12px;font-size:.875rem;">
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+                    <div class="form-group">
+                        <label style="font-size:.8rem;">Ngày bắt đầu <span style="color:var(--red);">*</span></label>
+                        <input type="date" id="mgrPromoStartDate" class="form-control" style="padding:9px 12px;font-size:.875rem;">
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size:.8rem;">Ngày kết thúc <span style="color:var(--red);">*</span></label>
+                        <input type="date" id="mgrPromoEndDate" class="form-control" style="padding:9px 12px;font-size:.875rem;">
+                    </div>
+                </div>
+                <div class="form-group" style="display:flex;align-items:center;gap:10px;">
+                    <input type="checkbox" id="mgrPromoIsActive" checked style="width:16px;height:16px;cursor:pointer;">
+                    <label for="mgrPromoIsActive" style="font-size:.85rem;cursor:pointer;margin:0;">Kích hoạt ngay</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelMgrPromoBtn">Hủy</button>
+                <button class="btn btn-primary" id="saveMgrPromoBtn"><i class="fa-solid fa-floppy-disk"></i> Lưu</button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/api.js"></script>
     <script src="js/manager.js"></script>
 </body>

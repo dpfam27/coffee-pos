@@ -32,7 +32,7 @@ function require_login() {
 
 /**
  * Ensure user has one of the allowed roles
- * Roles: 'Admin', 'StoreManager', 'ShiftLead', 'Barista'
+ * Roles: 'Admin', 'StoreManager', 'Barista'
  */
 function require_role($allowed_roles) {
     require_login();

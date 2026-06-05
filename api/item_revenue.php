@@ -19,7 +19,7 @@ try {
         FROM   order_item oi
         JOIN   menu_item  mi ON oi.item_id = mi.item_id
         JOIN   orders     o  ON oi.order_id = o.order_id
-        WHERE  o.order_status = 'Paid'
+        WHERE  o.order_status = 'Completed'
         GROUP  BY mi.item_id, mi.item_name
         ORDER  BY total_revenue DESC
     ");

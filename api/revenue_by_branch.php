@@ -18,7 +18,7 @@ try {
                COUNT(o.order_id) as order_count
         FROM   orders o
         JOIN   location l ON o.location_id = l.location_id
-        WHERE  o.order_status = 'Paid'
+        WHERE  o.order_status = 'Completed'
         GROUP BY l.location_id, l.name
         ORDER BY revenue DESC
     ";

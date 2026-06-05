@@ -1,84 +1,115 @@
 <?php
 // =============================================================
 // FILE  : api/prep_queue.php
-// UC1   : Beverage Preparation Queue  (Barista)
-// PARAMS: GET location_id (int, default 1)
+// DESC  : Beverage Preparation Queue (Barista) + Cancel order
+// Cancel rule: requires manager PIN stored in location.cancel_pin
+//              (fallback hardcoded PIN: "0000" until location table updated)
 // =============================================================
 
 require_once __DIR__ . '/_helpers.php';
 require_once __DIR__ . '/db.php';
 
-// Support both GET to read prep queue and POST to update order status
+require_login();
+
+$location_id = (int)($_SESSION['location_id'] ?? 0);
+
+// ── POST: cancel an order ──────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    require_login();
-    $input = json_decode(file_get_contents('php://input'), true);
-    $order_id = $input['order_id'] ?? null;
-    $new_status = $input['status'] ?? '';
-    
-    $allowed_statuses = ['Pending', 'Preparing', 'Served', 'Paid', 'Cancelled'];
-    if (!$order_id || !in_array($new_status, $allowed_statuses)) {
-        json(['success' => false, 'error' => 'Thông tin trạng thái hoặc mã đơn hàng không hợp lệ'], 400);
+    $input    = json_decode(file_get_contents('php://input'), true);
+    $order_id = isset($input['order_id']) ? (int)$input['order_id'] : 0;
+    $pin      = trim($input['cancel_pin'] ?? '');
+
+    if (!$order_id || $pin === '') {
+        json(['success' => false, 'error' => 'Thiếu mã đơn hoặc mã xác nhận hủy'], 400);
     }
-    
+
+    // Verify PIN against location's manager cancel pin
+    // cancel_pin column will be added to location table in Phase 8 schema update
+    // For now fall back to a configurable constant
+    define('CANCEL_PIN', '0000');
+    $valid_pin = CANCEL_PIN;
+
+    // Try to read per-location pin if column exists
+    $pin_check = $conn->query("SHOW COLUMNS FROM location LIKE 'cancel_pin'");
+    if ($pin_check && $pin_check->num_rows > 0) {
+        $lpin_stmt = $conn->prepare("SELECT cancel_pin FROM location WHERE location_id = ?");
+        $lpin_stmt->bind_param('i', $location_id);
+        $lpin_stmt->execute();
+        $lpin_row = $lpin_stmt->get_result()->fetch_assoc();
+        $lpin_stmt->close();
+        if ($lpin_row && !empty($lpin_row['cancel_pin'])) {
+            $valid_pin = $lpin_row['cancel_pin'];
+        }
+    }
+
+    if ($pin !== $valid_pin) {
+        json(['success' => false, 'error' => 'Mã xác nhận không đúng'], 403);
+    }
+
+    // Verify order belongs to this location
+    $chk = $conn->prepare("SELECT order_id, order_status FROM orders WHERE order_id = ? AND location_id = ?");
+    $chk->bind_param('ii', $order_id, $location_id);
+    $chk->execute();
+    $order_row = $chk->get_result()->fetch_assoc();
+    $chk->close();
+
+    if (!$order_row) {
+        json(['success' => false, 'error' => 'Đơn hàng không tồn tại tại chi nhánh này'], 404);
+    }
+    if ($order_row['order_status'] === 'Cancelled') {
+        json(['success' => false, 'error' => 'Đơn hàng đã bị hủy trước đó'], 409);
+    }
+
     try {
-        $stmt = $conn->prepare("UPDATE orders SET order_status = ? WHERE order_id = ?");
-        $stmt->bind_param('si', $new_status, $order_id);
-        $stmt->execute();
-        $affected = $stmt->affected_rows;
-        $stmt->close();
-        
-        // Log action in audit log
-        $staff_id = $_SESSION['staff_id'];
-        $details = "Updated order #$order_id status to $new_status";
-        $log_stmt = $conn->prepare("
-            INSERT INTO audit_log (staff_id, action_type, table_affected, record_id, details)
-            VALUES (?, 'UPDATE_ORDER_STATUS', 'orders', ?, ?)
-        ");
-        $log_stmt->bind_param('iis', $staff_id, $order_id, $details);
-        $log_stmt->execute();
-        $log_stmt->close();
-        
-        json(['success' => true, 'message' => 'Cập nhật trạng thái đơn hàng thành công']);
+        $upd = $conn->prepare("UPDATE orders SET order_status = 'Cancelled' WHERE order_id = ?");
+        $upd->bind_param('i', $order_id);
+        $upd->execute();
+        $upd->close();
+
+        $staff_id = (int)$_SESSION['staff_id'];
+        $details  = "Cancelled order #$order_id via manager PIN";
+        $log = $conn->prepare("INSERT INTO audit_log (staff_id, action_type, table_affected, record_id, details) VALUES (?, 'VOID_ORDER', 'orders', ?, ?)");
+        $log->bind_param('iis', $staff_id, $order_id, $details);
+        $log->execute();
+        $log->close();
+
+        json(['success' => true, 'message' => "Đơn hàng #$order_id đã được hủy thành công"]);
     } catch (Exception $e) {
-        json(['success' => false, 'error' => 'Lỗi cập nhật trạng thái: ' . $e->getMessage()], 500);
+        json(['success' => false, 'error' => 'Lỗi hủy đơn: ' . $e->getMessage()], 500);
     }
 }
 
-// GET method: Read the prep queue
-$location_id = $_SESSION['location_id'] ?? (isset($_GET['location_id']) ? (int) $_GET['location_id'] : 1);
-
-$sql = "
+// ── GET: fetch today's completed orders for prep display ───────
+// Shows all Completed orders from today so barista knows what to prepare
+$stmt = $conn->prepare("
     SELECT
         o.order_id,
-        DATE_FORMAT(o.order_date, '%H:%i:%s')   AS order_time,
+        DATE_FORMAT(o.order_date, '%H:%i')  AS order_time,
+        o.order_type,
+        o.order_status,
         mi.item_name,
         oi.quantity,
         GROUP_CONCAT(
             mo.option_name
             ORDER BY mg.group_name
             SEPARATOR ', '
-        )                                        AS customizations,
-        o.order_status
+        ) AS customizations
     FROM   orders o
-    JOIN   order_item oi             ON oi.order_id       = o.order_id
-    JOIN   menu_item  mi             ON mi.item_id        = oi.item_id
+    JOIN   order_item oi              ON oi.order_id       = o.order_id
+    JOIN   menu_item  mi              ON mi.item_id        = oi.item_id
     LEFT JOIN order_item_modifier oim ON oim.order_item_id = oi.order_item_id
     LEFT JOIN modifier_option mo      ON mo.option_id      = oim.option_id
     LEFT JOIN modifier_group  mg      ON mg.group_id       = mo.group_id
-    WHERE  o.location_id   = ?
-      AND  o.order_status IN ('Pending', 'Preparing')
+    WHERE  o.location_id = ?
+      AND  DATE(o.order_date) = CURDATE()
+      AND  o.order_status = 'Completed'
     GROUP BY oi.order_item_id, o.order_id, o.order_date,
-             mi.item_name, oi.quantity, o.order_status
-    ORDER BY o.order_date ASC
-";
-
-$stmt = $conn->prepare($sql);
+             mi.item_name, oi.quantity, o.order_status, o.order_type
+    ORDER BY o.order_date DESC
+");
 $stmt->bind_param('i', $location_id);
 $stmt->execute();
-$result = $stmt->get_result();
-$data   = $result->fetch_all(MYSQLI_ASSOC);
-
-echo json_encode(['success' => true, 'data' => $data]);
-
+$data = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
-$conn->close();
+
+json(['success' => true, 'data' => $data]);

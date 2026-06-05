@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng nhập | Antigravity POS</title>
+    <title>Đăng nhập | Coffee POS</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,7 +25,7 @@
                 <div class="logo-container">
                     <i class="fa-solid fa-mug-hot"></i>
                 </div>
-                <h1>Antigravity POS</h1>
+                <h1>Coffee POS</h1>
                 <p>Coffee Shop Chain Management System</p>
             </div>
 
@@ -68,20 +68,20 @@
                     <i class="fa-solid fa-circle-info"></i> Xem tài khoản Demo
                 </button>
                 <div class="demo-list" id="demoList">
-                    <div class="demo-item" data-phone="090-111-0001" data-pass="james123">
+                    <div class="demo-item" data-phone="090-111-0001" data-pass="password">
                         <span class="role admin">Admin</span>
                         <strong>James Carter</strong><br>
-                        <small>SĐT: 090-111-0001 · Pass: james123</small>
+                        <small>SĐT: 090-111-0001 · Pass: password</small>
                     </div>
-                    <div class="demo-item" data-phone="090-111-0002" data-pass="sarah123">
+                    <div class="demo-item" data-phone="090-111-0002" data-pass="password">
                         <span class="role manager">Manager</span>
                         <strong>Sarah Nguyen</strong><br>
-                        <small>SĐT: 090-111-0002 · Pass: sarah123</small>
+                        <small>SĐT: 090-111-0002 · Pass: password</small>
                     </div>
-                    <div class="demo-item" data-phone="090-111-0005" data-pass="kevin123">
+                    <div class="demo-item" data-phone="090-111-0005" data-pass="password">
                         <span class="role staff">Barista</span>
                         <strong>Kevin Le</strong><br>
-                        <small>SĐT: 090-111-0005 · Pass: kevin123</small>
+                        <small>SĐT: 090-111-0005 · Pass: password</small>
                     </div>
                 </div>
             </div>
@@ -172,7 +172,7 @@
                 } else if (role === 'StoreManager') {
                     window.location.href = 'manager.html';
                 } else {
-                    // ShiftLead or Barista go to POS
+                    // Barista goes to POS
                     window.location.href = 'pos.html';
                 }
             }

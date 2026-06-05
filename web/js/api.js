@@ -69,3 +69,37 @@ const API = {
         return this.request(endpoint, { method: 'DELETE' });
     }
 };
+
+// =============================================================
+// MOBILE NAVIGATION DRAWER
+// Injects a hamburger button + dim overlay and wires open/close.
+// No-op on pages without a sidebar (e.g. the login page).
+// =============================================================
+document.addEventListener('DOMContentLoaded', () => {
+    const appContainer = document.querySelector('.app-container');
+    const sidebar = document.querySelector('.sidebar');
+    const topBar = document.querySelector('.top-bar');
+    if (!appContainer || !sidebar || !topBar) return;
+
+    // Hamburger button (CSS hides it on desktop)
+    const toggle = document.createElement('button');
+    toggle.className = 'nav-toggle';
+    toggle.setAttribute('aria-label', 'Mở menu');
+    toggle.innerHTML = '<i class="fa-solid fa-bars"></i>';
+    topBar.insertBefore(toggle, topBar.firstChild);
+
+    // Dim overlay behind the drawer
+    const overlay = document.createElement('div');
+    overlay.className = 'nav-overlay';
+    appContainer.appendChild(overlay);
+
+    const close = () => appContainer.classList.remove('nav-open');
+
+    toggle.addEventListener('click', () => appContainer.classList.toggle('nav-open'));
+    overlay.addEventListener('click', close);
+
+    // Close the drawer after picking a menu item or logging out
+    sidebar.querySelectorAll('.menu-item-btn, .logout-btn').forEach((btn) => {
+        btn.addEventListener('click', close);
+    });
+});

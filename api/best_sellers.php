@@ -23,7 +23,7 @@ $sql = "
     FROM   order_item oi
     JOIN   orders    o  ON o.order_id  = oi.order_id
     JOIN   menu_item mi ON mi.item_id  = oi.item_id
-    WHERE  o.order_status = 'Paid'
+    WHERE  o.order_status = 'Completed'
       AND  o.order_date  >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
     GROUP BY mi.item_id, mi.item_name
     HAVING SUM(oi.quantity) >= ?

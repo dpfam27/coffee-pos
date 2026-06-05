@@ -19,17 +19,21 @@ try {
     // 1. Fetch main order information
     $order_stmt = $conn->prepare("
         SELECT o.order_id, o.order_date, o.order_type, o.order_status, o.total_amount,
-               t.table_number, s.name as staff_name, c.name as customer_name,
+               s.name as staff_name, c.name as customer_name,
                l.name as location_name, l.phone as location_phone,
                p.payment_method,
                COALESCE(op.amount_discounted, 0) as promo_discount,
                COALESCE((
-                   SELECT SUM(points_change) 
-                   FROM loyalty_transaction 
+                   SELECT SUM(points_change)
+                   FROM loyalty_transaction
+                   WHERE order_id = o.order_id AND txn_type = 'earn'
+               ), 0) as points_earned,
+               COALESCE((
+                   SELECT SUM(points_change)
+                   FROM loyalty_transaction
                    WHERE order_id = o.order_id AND txn_type = 'redeem'
                ), 0) as points_redeemed
         FROM   orders o
-        LEFT JOIN dining_table t ON o.table_id = t.table_id
         JOIN   staff s ON o.staff_id = s.staff_id
         LEFT JOIN customer c ON o.customer_id = c.customer_id
         JOIN   location l ON o.location_id = l.location_id
@@ -79,10 +83,11 @@ try {
     unset($it);
     
     // Format numeric values of the order
-    $order['total_amount'] = (float)$order['total_amount'];
-    $order['promo_discount'] = (float)$order['promo_discount'];
+    $order['total_amount']    = (float)$order['total_amount'];
+    $order['promo_discount']  = (float)$order['promo_discount'];
+    $order['points_earned']   = (int)$order['points_earned'];
     $order['points_redeemed'] = (int)$order['points_redeemed'];
-    $order['discount_amount'] = $order['promo_discount'] + ($order['points_redeemed'] * 100);
+    $order['loyalty_discount']= $order['points_redeemed'] * 1000;
     $order['subtotal_amount'] = $subtotal_amount;
     
     // Attach items

@@ -1,11 +1,15 @@
 // =============================================================
 // FILE : web/js/manager.js
-// DESC : Store Manager Dashboard front-end logic
+// DESC : Store Manager — dashboard, inventory, reports, menu CRUD, staff
 // =============================================================
 
-let currentUser = null;
-let inventoryData = [];
+let currentUser    = null;
+let inventoryData  = [];
+let menuData       = [];
+let editingItemId  = null;
+let editingMenuStaffId = null;
 let activeIngredientForAdjustment = null;
+let editingMgrPromoId = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     initApp();
@@ -14,442 +18,655 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function initApp() {
     try {
-        // 1. Get user context
         const userRes = await API.get('auth.php?action=me');
         if (userRes && userRes.success) {
             currentUser = userRes.user;
-            
-            // Check authorization
             if (currentUser.role !== 'StoreManager' && currentUser.role !== 'Admin') {
                 alert('Tài khoản không có quyền truy cập trang quản lý chi nhánh.');
                 window.location.href = 'index.html';
                 return;
             }
-            
-            document.getElementById('userName').textContent = currentUser.name;
-            document.getElementById('userRole').textContent = currentUser.role === 'Admin' ? 'Admin / Manager' : 'Cửa hàng trưởng';
-            document.getElementById('userAvatar').textContent = currentUser.name.charAt(0);
-            document.getElementById('currentBranch').textContent = 'Chi nhánh: ' + currentUser.location_name;
+            document.getElementById('userName').textContent    = currentUser.name;
+            document.getElementById('userRole').textContent    = currentUser.role === 'Admin' ? 'Quản trị viên' : 'Cửa hàng trưởng';
+            document.getElementById('userAvatar').textContent  = currentUser.name.charAt(0);
+            document.getElementById('currentBranch').textContent = 'Chi nhánh: ' + (currentUser.location_name || '');
         } else {
             window.location.href = 'index.html';
             return;
         }
-
-        // Start clock
         setInterval(updateClock, 1000);
         updateClock();
-
-        // 2. Load initially active tab data
         await loadDashboardTab();
-
-    } catch (err) {
-        console.error('Init Error:', err);
-    }
+    } catch (err) { console.error('Init Error:', err); }
 }
 
 function updateClock() {
     const now = new Date();
-    const timeStr = now.toLocaleTimeString('vi-VN') + ' - ' + now.toLocaleDateString('vi-VN');
-    document.getElementById('currentTime').textContent = timeStr;
+    document.getElementById('currentTime').textContent =
+        now.toLocaleTimeString('vi-VN') + ' — ' + now.toLocaleDateString('vi-VN');
 }
 
-// ==============================================================================
-// DATA LOADING BY TABS
-// ==============================================================================
+// ── TAB LOADERS ────────────────────────────────────────────────
 
 async function loadDashboardTab() {
     try {
-        // Load branch history to calculate stats
-        const historyRes = await API.get('order_history.php');
-        if (historyRes && historyRes.success) {
-            const orders = historyRes.data;
-            let totalRevenue = 0;
-            let paidCount = 0;
+        const [histRes, lowRes] = await Promise.all([
+            API.get('order_history.php'),
+            API.get('low_stock.php'),
+        ]);
 
-            orders.forEach(o => {
-                if (o.order_status === 'Paid') {
-                    // Check if order date is today
-                    const orderDate = new Date(o.order_date).toDateString();
-                    const today = new Date().toDateString();
-                    if (orderDate === today) {
-                        totalRevenue += o.total_amount;
-                        paidCount++;
+        if (histRes?.success) {
+            const todayStr = new Date().toLocaleDateString('vi-VN');
+            let revenue = 0, count = 0;
+            histRes.data.forEach(o => {
+                if (o.order_status === 'Completed') {
+                    // order_date from API: "dd/mm/yyyy HH:MM" or ISO; try match today
+                    const oDate = new Date(o.order_date);
+                    if (oDate.toLocaleDateString('vi-VN') === todayStr) {
+                        revenue += parseFloat(o.total_amount);
+                        count++;
                     }
                 }
             });
-
-            document.getElementById('branchRevenue').textContent = formatVND(totalRevenue);
-            document.getElementById('branchOrderCount').textContent = paidCount;
+            document.getElementById('branchRevenue').textContent     = formatVND(revenue);
+            document.getElementById('branchOrderCount').textContent  = count;
         }
 
-        // Load low-stock alerts
-        const lowStockRes = await API.get('low_stock.php');
-        if (lowStockRes && lowStockRes.success) {
-            const lowIngs = lowStockRes.low_ingredients;
-
-            document.getElementById('branchLowStockCount').textContent = lowIngs.length;
-
-            // Render low-stock ingredients
-            const lowIngsTbody = document.getElementById('lowIngredientsBody');
-            lowIngsTbody.innerHTML = '';
-            if (lowIngs.length === 0) {
-                lowIngsTbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-muted); color: var(--success);"><i class="fa-solid fa-circle-check"></i> Đủ nguyên liệu trong kho.</td></tr>';
-            } else {
-                lowIngs.forEach(ing => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td><strong>${ing.name}</strong></td>
-                        <td style="color: var(--danger); font-weight: bold;">${ing.stock_level} ${ing.unit}</td>
-                        <td>${ing.low_stock_threshold} ${ing.unit}</td>
-                    `;
-                    lowIngsTbody.appendChild(tr);
-                });
+        if (lowRes?.success) {
+            const lowIngs  = lowRes.low_ingredients || [];
+            const lowCount = lowIngs.length;
+            const countEl  = document.getElementById('branchLowStockCount');
+            const iconEl   = document.getElementById('lowStockIcon');
+            countEl.textContent = lowCount;
+            countEl.style.color = lowCount > 0 ? 'var(--red)' : 'var(--t1)';
+            if (iconEl) {
+                iconEl.className = lowCount > 0 ? 'stat-icon danger' : 'stat-icon success';
+                iconEl.querySelector('i').className = lowCount > 0
+                    ? 'fa-solid fa-triangle-exclamation'
+                    : 'fa-solid fa-circle-check';
             }
         }
-    } catch (err) {
-        console.error('Error loading dashboard stats:', err);
-    }
+    } catch (err) { console.error('loadDashboardTab:', err); }
 }
 
 async function loadInventoryTab() {
     try {
         const res = await API.get('inventory.php');
-        if (res && res.success) {
-            inventoryData = res.data;
-            const tbody = document.getElementById('inventoryTableBody');
-            tbody.innerHTML = '';
-
+        inventoryData = res?.data || [];
+        const tbody = document.getElementById('inventoryTableBody');
+        tbody.innerHTML = '';
+        if (inventoryData.length) {
             inventoryData.forEach(ing => {
-                const tr = document.createElement('tr');
                 const isLow = ing.stock_level < ing.low_stock_threshold;
-                
-                let statusBadge = '';
-                if (ing.stock_level <= 0) {
-                    statusBadge = '<span class="badge badge-danger">Hết hàng</span>';
-                } else if (isLow) {
-                    statusBadge = '<span class="badge badge-warning">Sắp hết</span>';
-                } else {
-                    statusBadge = '<span class="badge badge-success">An toàn</span>';
-                }
-
+                const badge = ing.stock_level <= 0
+                    ? '<span class="badge badge-danger">Hết hàng</span>'
+                    : isLow ? '<span class="badge badge-warning">Sắp hết</span>'
+                    : '<span class="badge badge-success">An toàn</span>';
+                const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${ing.ingredient_id}</td>
                     <td><strong>${ing.name}</strong></td>
-                    <td style="font-weight: 600; ${isLow ? 'color: var(--danger);' : ''}">${ing.stock_level}</td>
+                    <td style="font-weight:600;${isLow ? 'color:var(--red);' : ''}">${ing.stock_level}</td>
                     <td>${ing.unit}</td>
                     <td>${ing.low_stock_threshold}</td>
-                    <td>${statusBadge}</td>
+                    <td>${badge}</td>
                     <td>
-                        <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;" onclick="openAdjustmentModal(${ing.ingredient_id})">
+                        <button class="btn btn-secondary" style="padding:4px 8px;font-size:.75rem;" onclick="openAdjustmentModal(${ing.ingredient_id})">
                             <i class="fa-solid fa-sliders"></i> Điều chỉnh
                         </button>
-                    </td>
-                `;
+                    </td>`;
                 tbody.appendChild(tr);
             });
-
-            if (inventoryData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">Không có nguyên liệu nào trong kho.</td></tr>';
-            }
+        } else {
+            tbody.innerHTML = emptyRow(7);
         }
-    } catch (err) {
-        console.error('Error loading inventory:', err);
-    }
+    } catch (err) { console.error('loadInventoryTab:', err); }
 }
+
+let currentPeriod = 'day';
 
 async function loadReportsTab() {
     try {
-        // 1. Load Sales by Item
-        const itemRes = await API.get('sales_by_item.php');
+        const [itemRes] = await Promise.all([API.get('sales_by_item.php')]);
+
         const itemTbody = document.getElementById('salesByItemBody');
         itemTbody.innerHTML = '';
-        
-        if (itemRes && itemRes.success && itemRes.data) {
+        if (itemRes?.success && itemRes.data?.length) {
             itemRes.data.forEach(row => {
                 const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><strong>${row.item_name}</strong></td>
-                    <td>${row.quantity_sold} ly/đĩa</td>
-                    <td><strong>${formatVND(row.total_revenue)}</strong></td>
-                `;
+                tr.innerHTML = `<td><strong>${row.item_name}</strong></td><td>${row.quantity_sold}</td><td><strong>${formatVND(row.total_revenue)}</strong></td>`;
                 itemTbody.appendChild(tr);
             });
-            if (itemRes.data.length === 0) {
-                itemTbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 20px;">Không có dữ liệu doanh thu món ăn.</td></tr>';
-            }
+        } else { itemTbody.innerHTML = emptyRow(3); }
+
+        await loadPeriodReport(currentPeriod);
+    } catch (err) { console.error('loadReportsTab:', err); }
+}
+
+async function loadPeriodReport(period) {
+    currentPeriod = period;
+
+    // Update button styles
+    document.querySelectorAll('.period-btn').forEach(b => {
+        b.className = b.dataset.period === period ? 'btn btn-primary period-btn' : 'btn btn-secondary period-btn';
+    });
+
+    const colLabels = { day: 'Khung giờ', week: 'Tuần', month: 'Tháng' };
+    const summaryLabels = { day: 'Tổng hôm nay:', week: 'Tổng 12 tuần:', month: 'Tổng 12 tháng:' };
+    document.getElementById('periodColHeader').textContent   = colLabels[period];
+    document.getElementById('periodSummaryLabel').textContent = summaryLabels[period];
+
+    const tbody = document.getElementById('salesByHourBody');
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--t2);padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải...</td></tr>`;
+
+    try {
+        const res = await API.get(`sales_by_hour.php?period=${period}`);
+        tbody.innerHTML = '';
+        if (!res?.success || !res.data?.length) {
+            tbody.innerHTML = emptyRow(4, 'Không có dữ liệu cho kỳ này.');
+            document.getElementById('periodSummaryTotal').textContent = formatVND(0);
+            return;
         }
-
-        // 2. Load Sales by Hour
-        const hourRes = await API.get('sales_by_hour.php');
-        const hourTbody = document.getElementById('salesByHourBody');
-        hourTbody.innerHTML = '';
-
-        if (hourRes && hourRes.success && hourRes.data) {
-            // Find max revenue hour for percentage calculation
-            const maxRev = Math.max(...hourRes.data.map(h => h.total_revenue)) || 1.0;
-
-            hourRes.data.forEach(row => {
-                const tr = document.createElement('tr');
-                const activityPct = Math.round((row.total_revenue / maxRev) * 100);
-                
-                tr.innerHTML = `
-                    <td>${row.hour_of_day.toString().padStart(2, '0')}:00</td>
-                    <td>${row.order_count} đơn</td>
-                    <td><strong>${formatVND(row.total_revenue)}</strong></td>
-                    <td style="width: 40%;">
-                        <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;">
-                            <div style="width: ${activityPct}%; height: 100%; background: linear-gradient(90deg, var(--primary), var(--info)); border-radius: 4px;"></div>
-                        </div>
-                    </td>
-                `;
-                hourTbody.appendChild(tr);
-            });
-            if (hourRes.data.length === 0) {
-                hourTbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">Không có dữ liệu bán hàng theo giờ.</td></tr>';
-            }
-        }
+        const maxRev = Math.max(...res.data.map(r => r.total_revenue)) || 1;
+        let totalRev = 0;
+        res.data.forEach(row => {
+            if (row.order_count === 0) return; // skip zero rows for week/month
+            const pct = Math.round((row.total_revenue / maxRev) * 100);
+            totalRev += row.total_revenue;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="white-space:nowrap;">${row.period_label}</td>
+                <td>${row.order_count} đơn</td>
+                <td><strong>${formatVND(row.total_revenue)}</strong></td>
+                <td style="width:35%;">
+                    <div style="width:100%;height:7px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden;">
+                        <div style="width:${pct}%;height:100%;background:linear-gradient(90deg,var(--amber),var(--blue));border-radius:4px;"></div>
+                    </div>
+                </td>`;
+            tbody.appendChild(tr);
+        });
+        if (!tbody.children.length) tbody.innerHTML = emptyRow(4, 'Không có đơn nào trong kỳ này.');
+        document.getElementById('periodSummaryTotal').textContent = formatVND(totalRev);
     } catch (err) {
-        console.error('Error loading reports:', err);
+        tbody.innerHTML = emptyRow(4, 'Lỗi tải dữ liệu.');
+        console.error('loadPeriodReport:', err);
     }
+}
+
+async function loadMenuTab() {
+    try {
+        const res = await API.get('menu.php?all=1');
+        menuData = res?.data || [];
+        // Populate category selector
+        const catSel = document.getElementById('menuCategoryFilter');
+        catSel.innerHTML = '<option value="all">Tất cả danh mục</option>';
+        menuData.forEach(cat => {
+            catSel.innerHTML += `<option value="${cat.category_id}">${cat.category_name}</option>`;
+        });
+        renderMenuTable('all');
+    } catch (err) { console.error('loadMenuTab:', err); }
+}
+
+function renderMenuTable(catId) {
+    const tbody = document.getElementById('menuTableBody');
+    tbody.innerHTML = '';
+    let found = false;
+    menuData.forEach(cat => {
+        if (catId !== 'all' && cat.category_id != catId) return;
+        cat.items.forEach(item => {
+            found = true;
+            const availBadge = item.is_available
+                ? '<span class="badge badge-success">Đang bán</span>'
+                : '<span class="badge badge-secondary">Tạm ngừng</span>';
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${item.item_id}</td>
+                <td><strong>${item.item_name}</strong></td>
+                <td>${cat.category_name}</td>
+                <td>${formatVND(item.base_price)}</td>
+                <td>${availBadge}</td>
+                <td>
+                    <button class="btn btn-secondary" style="padding:4px 8px;font-size:.75rem;margin-right:2px;" onclick='openMenuItemModal(${JSON.stringify(item)}, ${cat.category_id})'>
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                    <button class="btn btn-secondary" style="padding:4px 8px;font-size:.75rem;" onclick="toggleMenuAvailability(${item.item_id}, '${item.item_name}', ${item.is_available})">
+                        <i class="fa-solid fa-power-off"></i>
+                    </button>
+                </td>`;
+            tbody.appendChild(tr);
+        });
+    });
+    if (!found) tbody.innerHTML = emptyRow(6);
 }
 
 async function loadStaffTab() {
     try {
         const res = await API.get('staff.php');
-        if (res && res.success) {
-            const tbody = document.getElementById('rosterTableBody');
-            tbody.innerHTML = '';
+        // SM: can add/deactivate Barista; Admin: full control
+        const canWrite = currentUser?.role === 'Admin' || currentUser?.role === 'StoreManager';
 
-            res.roster.forEach(r => {
+        const thead = document.querySelector('#staff-tab table thead tr');
+        if (thead) {
+            thead.innerHTML = '<th>Họ tên</th><th>Vai trò</th><th>SĐT</th><th>Trạng thái</th><th>Thao tác</th>';
+        }
+
+        const tbody = document.getElementById('rosterTableBody');
+        tbody.innerHTML = '';
+        if (res?.success && res.staff?.length) {
+            res.staff.forEach(s => {
+                const activeBadge = s.is_active
+                    ? '<span class="badge badge-success">Đang làm</span>'
+                    : '<span class="badge badge-secondary">Đã nghỉ</span>';
+                const roleLabel = { StoreManager: 'Quản lý', Barista: 'Pha chế', Admin: 'Admin' }[s.role] || s.role;
+                // SM can only edit Barista accounts; Admin can edit all
+                const canEditThis = currentUser?.role === 'Admin' || s.role === 'Barista';
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td><strong>${r.name}</strong></td>
-                    <td><span class="badge ${r.role === 'StoreManager' ? 'badge-info' : 'badge-secondary'}">${r.role}</span></td>
-                    <td>${r.phone}</td>
-                    <td><span style="color: var(--primary); font-weight: bold;">${r.shift}</span></td>
-                    <td>${r.days}</td>
-                `;
+                    <td><strong>${s.name}</strong></td>
+                    <td>${roleLabel}</td>
+                    <td>${s.phone || '—'}</td>
+                    <td>${activeBadge}</td>
+                    <td>${canWrite && canEditThis ? `
+                        <button class="btn btn-secondary" style="padding:4px 8px;font-size:.75rem;margin-right:2px;" onclick='openMgrStaffModal(${JSON.stringify(s)})'>
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button class="btn btn-secondary" style="padding:4px 8px;font-size:.75rem;margin-right:2px;" onclick="toggleStaffActive(${s.staff_id}, ${s.is_active})">
+                            <i class="fa-solid fa-power-off"></i>
+                        </button>
+                        <button class="btn btn-secondary" style="padding:4px 8px;font-size:.75rem;" onclick="resetStaffPin(${s.staff_id}, '${s.name}')">
+                            <i class="fa-solid fa-key"></i>
+                        </button>` : '—'}</td>`;
                 tbody.appendChild(tr);
             });
-
-            if (res.roster.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 30px;">Không có nhân viên đăng ký ca.</td></tr>';
-            }
+        } else {
+            tbody.innerHTML = emptyRow(5);
         }
-    } catch (err) {
-        console.error('Error loading staff roster:', err);
-    }
+    } catch (err) { console.error('loadStaffTab:', err); }
 }
 
-// ==============================================================================
-// STOCK ADJUSTMENT MODAL & POST ACTIONS
-// ==============================================================================
+// ── INVENTORY MODALS ───────────────────────────────────────────
 
 function openAdjustmentModal(ingId) {
     activeIngredientForAdjustment = inventoryData.find(i => i.ingredient_id === ingId);
     if (!activeIngredientForAdjustment) return;
-
     document.getElementById('adjustingIngredientName').textContent = activeIngredientForAdjustment.name;
-    document.getElementById('adjustIngredientUnit').textContent = activeIngredientForAdjustment.unit;
-    document.getElementById('adjustAmount').value = '';
-    document.getElementById('adjustReason').value = '';
+    document.getElementById('adjustIngredientUnit').textContent    = activeIngredientForAdjustment.unit;
+    document.getElementById('adjustAmount').value  = '';
+    document.getElementById('adjustReason').value  = '';
     document.getElementById('adjustActionType').value = 'add';
-    
     document.getElementById('adjustmentModal').classList.add('show');
 }
 
 async function saveStockAdjustment() {
-    const amountInput = document.getElementById('adjustAmount');
-    const amount = parseFloat(amountInput.value);
-    const actionType = document.getElementById('adjustActionType').value;
-    const reasonInput = document.getElementById('adjustReason');
-    const reason = reasonInput.value.trim();
-
-    if (isNaN(amount) || amount < 0) {
-        alert('Vui lòng điền số lượng điều chỉnh hợp lệ!');
-        return;
-    }
-
-    if (empty(reason)) {
-        alert('Vui lòng điền lý do điều chỉnh kho (Bắt buộc)!');
-        return;
-    }
-
-    const saveBtn = document.getElementById('saveAdjustmentBtn');
-    saveBtn.disabled = true;
-    saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
-
-    const payload = {
-        ingredient_id: activeIngredientForAdjustment.ingredient_id,
-        amount: amount,
-        action_type: actionType,
-        reason: reason
-    };
-
+    const amount = parseFloat(document.getElementById('adjustAmount').value);
+    const action = document.getElementById('adjustActionType').value;
+    const reason = document.getElementById('adjustReason').value.trim();
+    if (isNaN(amount) || amount < 0) { alert('Số lượng không hợp lệ!'); return; }
+    if (!reason) { alert('Vui lòng điền lý do điều chỉnh!'); return; }
+    const btn = document.getElementById('saveAdjustmentBtn');
+    btn.disabled = true;
     try {
-        const res = await API.post('inventory.php', payload);
-        if (res && res.success) {
+        const res = await API.post('inventory.php', {
+            ingredient_id: activeIngredientForAdjustment.ingredient_id,
+            amount, action_type: action, reason,
+        });
+        if (res?.success) {
             alert(res.message || 'Cập nhật kho thành công!');
-            closeAdjustmentModal();
-            
-            // Reload views
+            document.getElementById('adjustmentModal').classList.remove('show');
             await loadInventoryTab();
             await loadDashboardTab();
-        } else {
-            alert(res.error || 'Lỗi lưu điều chỉnh kho');
-        }
-    } catch (err) {
-        alert(err.message);
-    } finally {
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = 'Lưu thay đổi';
-    }
+        } else { alert(res?.error || 'Lỗi lưu điều chỉnh kho'); }
+    } catch (err) { alert(err.message); }
+    finally { btn.disabled = false; btn.innerHTML = 'Lưu thay đổi'; }
 }
-
-function closeAdjustmentModal() {
-    document.getElementById('adjustmentModal').classList.remove('show');
-    activeIngredientForAdjustment = null;
-}
-
-// ==============================================================================
-// ADD INGREDIENT MODAL
-// ==============================================================================
 
 function openAddIngredientModal() {
-    document.getElementById('newIngName').value = '';
-    document.getElementById('newIngStock').value = '';
+    ['newIngName','newIngStock','newIngThreshold'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('newIngUnit').value = 'kg';
-    document.getElementById('newIngThreshold').value = '';
     document.getElementById('addIngredientModal').classList.add('show');
 }
 
 async function saveNewIngredient() {
-    const name = document.getElementById('newIngName').value.trim();
-    const stock = parseFloat(document.getElementById('newIngStock').value);
-    const unit = document.getElementById('newIngUnit').value;
+    const name      = document.getElementById('newIngName').value.trim();
+    const stock     = parseFloat(document.getElementById('newIngStock').value);
+    const unit      = document.getElementById('newIngUnit').value;
     const threshold = parseFloat(document.getElementById('newIngThreshold').value);
-
-    if (!name) {
-        alert('Vui lòng nhập tên nguyên vật liệu!');
-        return;
+    if (!name || isNaN(stock) || stock < 0 || isNaN(threshold) || threshold < 0) {
+        alert('Vui lòng điền đầy đủ và hợp lệ thông tin nguyên liệu!'); return;
     }
-    if (isNaN(stock) || stock < 0) {
-        alert('Số lượng không hợp lệ!');
-        return;
-    }
-    if (isNaN(threshold) || threshold < 0) {
-        alert('Định mức cảnh báo không hợp lệ!');
-        return;
-    }
-
-    const saveBtn = document.getElementById('saveAddIngredientBtn');
-    saveBtn.disabled = true;
-    saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
-
+    const btn = document.getElementById('saveAddIngredientBtn');
+    btn.disabled = true;
     try {
-        const res = await API.post('inventory.php', {
-            action: 'add_new',
-            name: name,
-            stock_level: stock,
-            unit: unit,
-            low_stock_threshold: threshold
-        });
-        if (res && res.success) {
-            alert(`Đã thêm ngành vật liệu "${name}" vào kho thành công!`);
+        const res = await API.post('inventory.php', { action: 'add_new', name, stock_level: stock, unit, low_stock_threshold: threshold });
+        if (res?.success) {
+            alert(`Đã thêm "${name}" vào kho thành công!`);
             document.getElementById('addIngredientModal').classList.remove('show');
             await loadInventoryTab();
-            await loadDashboardTab();
-        } else {
-            alert(res.error || 'Lỗi thêm nguyên vật liệu');
-        }
-    } catch (err) {
-        alert(err.message);
-    } finally {
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Thêm vào kho';
-    }
+        } else { alert(res?.error || 'Lỗi thêm nguyên liệu'); }
+    } catch (err) { alert(err.message); }
+    finally { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-plus"></i> Thêm vào kho'; }
 }
 
-// ==============================================================================
-// VIEW TABS & SWITCHING
-// ==============================================================================
+// ── MENU MODAL ─────────────────────────────────────────────────
+
+function openMenuItemModal(item = null, catId = null) {
+    editingItemId = item ? item.item_id : null;
+    document.getElementById('menuItemModalTitle').textContent = item ? 'Sửa món ăn' : 'Thêm món mới';
+    document.getElementById('menuItemName').value    = item?.item_name  || '';
+    document.getElementById('menuItemPrice').value   = item?.base_price || '';
+    // Populate category selector
+    const catSel = document.getElementById('menuItemCategory');
+    catSel.innerHTML = '';
+    menuData.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat.category_id;
+        opt.textContent = cat.category_name;
+        if (catId && cat.category_id == catId) opt.selected = true;
+        catSel.appendChild(opt);
+    });
+    document.getElementById('menuItemAvailable').checked = item ? !!item.is_available : true;
+    document.getElementById('menuItemModal').classList.add('show');
+}
+
+async function saveMenuItem() {
+    const payload = {
+        item_name:    document.getElementById('menuItemName').value.trim(),
+        category_id:  parseInt(document.getElementById('menuItemCategory').value),
+        base_price:   parseFloat(document.getElementById('menuItemPrice').value),
+        is_available: document.getElementById('menuItemAvailable').checked ? 1 : 0,
+    };
+    if (!payload.item_name || !payload.category_id || payload.base_price <= 0) {
+        alert('Vui lòng điền đầy đủ tên, danh mục và giá hợp lệ!'); return;
+    }
+    if (editingItemId) payload._method = 'PUT', payload.item_id = editingItemId;
+    try {
+        const res = await API.post('menu.php', payload);
+        if (res?.success) {
+            document.getElementById('menuItemModal').classList.remove('show');
+            await loadMenuTab();
+            renderMenuTable(document.getElementById('menuCategoryFilter').value);
+        } else { alert(res?.error || 'Lỗi lưu món'); }
+    } catch (err) { alert(err.message); }
+}
+
+async function toggleMenuAvailability(itemId, name, currentState) {
+    const action = currentState ? 'tạm ngừng' : 'mở bán lại';
+    if (!confirm(`${action} món "${name}"?`)) return;
+    try {
+        const res = await API.post('menu.php', { _method: 'DELETE', item_id: itemId });
+        if (res?.success) await loadMenuTab(), renderMenuTable(document.getElementById('menuCategoryFilter').value);
+        else alert(res?.error || 'Lỗi');
+    } catch (err) { alert(err.message); }
+}
+
+// ── STAFF MODAL (Manager view — Barista only) ──────────────────
+
+function openMgrStaffModal(staff = null) {
+    editingMenuStaffId = staff ? staff.staff_id : null;
+    document.getElementById('mgrStaffModalTitle').textContent = staff ? 'Sửa nhân viên' : 'Thêm nhân viên mới';
+    document.getElementById('mgrStaffName').value  = staff?.name  || '';
+    document.getElementById('mgrStaffPhone').value = staff?.phone || '';
+    document.getElementById('mgrStaffModal').classList.add('show');
+}
+
+async function saveMgrStaff() {
+    const payload = {
+        name:  document.getElementById('mgrStaffName').value.trim(),
+        phone: document.getElementById('mgrStaffPhone').value.trim(),
+        role:  'Barista',
+    };
+    if (editingMenuStaffId) payload._method = 'PUT', payload.staff_id = editingMenuStaffId;
+    try {
+        const res = await API.post('staff.php', payload);
+        if (res?.success) {
+            if (!editingMenuStaffId && res.default_password) {
+                alert(`Tạo tài khoản thành công!\nMật khẩu mặc định: ${res.default_password}`);
+            }
+            document.getElementById('mgrStaffModal').classList.remove('show');
+            await loadStaffTab();
+        } else { alert(res?.error || 'Lỗi lưu nhân viên'); }
+    } catch (err) { alert(err.message); }
+}
+
+async function toggleStaffActive(staffId, currentState) {
+    if (!confirm(`${currentState ? 'Vô hiệu hóa' : 'Kích hoạt lại'} tài khoản nhân viên này?`)) return;
+    try {
+        const res = await API.post('staff.php', { _method: 'DEACTIVATE', staff_id: staffId });
+        if (res?.success) await loadStaffTab();
+        else alert(res?.error || 'Lỗi');
+    } catch (err) { alert(err.message); }
+}
+
+async function resetStaffPin(staffId, name) {
+    if (!confirm(`Đặt lại mật khẩu cho "${name}"?`)) return;
+    try {
+        const res = await API.post('staff.php', { _method: 'RESET_PIN', staff_id: staffId });
+        if (res?.success) alert(`Mật khẩu mới: ${res.default_password}`);
+        else alert(res?.error || 'Lỗi');
+    } catch (err) { alert(err.message); }
+}
+
+// ── PROMOTIONS (chi nhánh) ─────────────────────────────────────
+
+async function loadPromotionsTab() {
+    try {
+        const res = await API.get('promotions.php');
+        const tbody = document.getElementById('mgrPromotionsTableBody');
+        tbody.innerHTML = '';
+        if (res?.success && res.data?.length) {
+            res.data.forEach(p => {
+                const typeText = p.discount_type === 'percent' ? 'Giảm %' : 'Giảm tiền';
+                const valText  = p.discount_type === 'percent' ? `${p.discount_value}%` : formatVND(p.discount_value);
+                const badge    = p.is_active
+                    ? '<span class="badge badge-success">Đang chạy</span>'
+                    : '<span class="badge badge-secondary">Tạm ngừng</span>';
+                const scopeBadge = p.location_id === null
+                    ? '<span class="badge badge-info">Toàn chuỗi</span>'
+                    : '<span class="badge badge-secondary">Chi nhánh</span>';
+                // Chain-wide promos: show info only, no edit/delete buttons (Admin manages those)
+                const actions = p.location_id !== null
+                    ? `<button class="btn btn-secondary" style="padding:4px 8px;font-size:.75rem;margin-right:4px;" onclick='openMgrPromoModal(${JSON.stringify(p)})'>
+                           <i class="fa-solid fa-pen-to-square"></i>
+                       </button>
+                       <button class="btn btn-danger" style="padding:4px 8px;font-size:.75rem;" onclick="deleteMgrPromo(${p.promotion_id}, '${p.name}')">
+                           <i class="fa-solid fa-trash"></i>
+                       </button>`
+                    : `<span style="font-size:.75rem;color:var(--t2);">Chỉ Admin sửa</span>`;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${p.name}</strong></td>
+                    <td>${typeText}</td>
+                    <td><strong style="color:var(--amber);">${valText}</strong></td>
+                    <td>${p.start_date}</td>
+                    <td>${p.end_date}</td>
+                    <td>${scopeBadge}</td>
+                    <td>${badge}</td>
+                    <td>${actions}</td>`;
+                tbody.appendChild(tr);
+            });
+        } else {
+            tbody.innerHTML = emptyRow(8, 'Chưa có khuyến mãi nào.');
+        }
+    } catch (err) { console.error('loadPromotionsTab:', err); }
+}
+
+function openMgrPromoModal(promo = null) {
+    editingMgrPromoId = promo ? promo.promotion_id : null;
+    document.getElementById('mgrPromoModalTitle').textContent = promo ? 'Sửa khuyến mãi' : 'Thêm khuyến mãi mới';
+    document.getElementById('mgrPromoName').value       = promo?.name           || '';
+    document.getElementById('mgrPromoType').value       = promo?.discount_type  || 'percent';
+    document.getElementById('mgrPromoValue').value      = promo?.discount_value || '';
+    document.getElementById('mgrPromoStartDate').value  = promo?.start_date     || '';
+    document.getElementById('mgrPromoEndDate').value    = promo?.end_date       || '';
+    document.getElementById('mgrPromoIsActive').checked = promo ? !!promo.is_active : true;
+    document.getElementById('mgrPromoModal').classList.add('show');
+}
+
+async function saveMgrPromo() {
+    const payload = {
+        name:           document.getElementById('mgrPromoName').value.trim(),
+        discount_type:  document.getElementById('mgrPromoType').value,
+        discount_value: parseFloat(document.getElementById('mgrPromoValue').value),
+        start_date:     document.getElementById('mgrPromoStartDate').value,
+        end_date:       document.getElementById('mgrPromoEndDate').value,
+        is_active:      document.getElementById('mgrPromoIsActive').checked ? 1 : 0,
+    };
+    if (editingMgrPromoId) payload._method = 'PUT', payload.promotion_id = editingMgrPromoId;
+    try {
+        const res = await API.post('promotions.php', payload);
+        if (res?.success) {
+            document.getElementById('mgrPromoModal').classList.remove('show');
+            await loadPromotionsTab();
+        } else {
+            alert(res?.error || 'Lỗi lưu khuyến mãi');
+        }
+    } catch (err) { alert(err.message); }
+}
+
+async function deleteMgrPromo(promoId, name) {
+    if (!confirm(`Xóa/vô hiệu hóa khuyến mãi "${name}"?`)) return;
+    try {
+        const res = await API.post('promotions.php', { _method: 'DELETE', promotion_id: promoId });
+        if (res?.success) {
+            alert(res.message);
+            await loadPromotionsTab();
+        } else {
+            alert(res?.error || 'Lỗi xóa khuyến mãi');
+        }
+    } catch (err) { alert(err.message); }
+}
+
+// ── LOYALTY / KHTT ────────────────────────────────────────────
+
+async function loadLoyaltyTab() {
+    try {
+        const res = await API.get('loyalty_balance.php?limit=50');
+        const tbody = document.getElementById('loyaltyListBody');
+        tbody.innerHTML = '';
+        if (res?.success && res.data?.length) {
+            res.data.forEach(c => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${c.name}</strong></td>
+                    <td>${c.phone}</td>
+                    <td><strong style="color:var(--amber);">${c.points_balance} điểm</strong></td>`;
+                tbody.appendChild(tr);
+            });
+        } else {
+            tbody.innerHTML = emptyRow(3, 'Chưa có khách hàng thân thiết.');
+        }
+    } catch (err) { console.error('loadLoyaltyTab:', err); }
+}
+
+async function searchLoyaltyCustomer() {
+    const phone = document.getElementById('loyaltySearchPhone').value.trim();
+    if (!phone) return;
+    const resultEl = document.getElementById('loyaltySearchResult');
+    const emptyEl  = document.getElementById('loyaltySearchEmpty');
+    resultEl.style.display = 'none';
+    emptyEl.style.display  = 'none';
+    try {
+        const res = await API.get(`loyalty_balance.php?phone=${encodeURIComponent(phone)}`);
+        if (res?.success && res.data) {
+            const c = res.data;
+            document.getElementById('loyaltyResultName').textContent   = c.name;
+            document.getElementById('loyaltyResultPhone').textContent  = c.phone;
+            document.getElementById('loyaltyResultPoints').textContent = c.points_balance;
+            document.getElementById('loyaltyResultValue').textContent  = formatVND(c.points_balance * 1000);
+            resultEl.style.display = 'block';
+        } else {
+            emptyEl.style.display = 'block';
+        }
+    } catch (err) { emptyEl.style.display = 'block'; }
+}
+
+// ── EVENT LISTENERS ────────────────────────────────────────────
 
 function setupEventListeners() {
-    // Menu Tab Switching
     document.querySelectorAll('.sidebar-menu .menu-item-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const target = btn.getAttribute('data-target');
-            switchTab(target);
-        });
+        btn.addEventListener('click', () => switchTab(btn.dataset.target));
     });
 
-    // Logout
     document.getElementById('logoutBtn').addEventListener('click', async () => {
-        if (confirm('Bạn có chắc chắn muốn đăng xuất không?')) {
+        if (confirm('Đăng xuất?')) {
             const res = await API.get('auth.php?action=logout');
-            if (res && res.success) {
-                window.location.href = 'index.html';
-            }
+            if (res?.success) window.location.href = 'index.html';
         }
     });
 
-    // Refresh inventory table
+    // Inventory
     document.getElementById('refreshInventoryBtn').addEventListener('click', loadInventoryTab);
-
-    // Modal close buttons
-    document.getElementById('closeAdjustmentModal').addEventListener('click', closeAdjustmentModal);
-    document.getElementById('cancelAdjustmentBtn').addEventListener('click', closeAdjustmentModal);
-    document.getElementById('saveAdjustmentBtn').addEventListener('click', saveStockAdjustment);
-
-    // Add ingredient modal
     document.getElementById('addIngredientBtn').addEventListener('click', openAddIngredientModal);
+    document.getElementById('closeAdjustmentModal').addEventListener('click', () => document.getElementById('adjustmentModal').classList.remove('show'));
+    document.getElementById('cancelAdjustmentBtn').addEventListener('click', () => document.getElementById('adjustmentModal').classList.remove('show'));
+    document.getElementById('saveAdjustmentBtn').addEventListener('click', saveStockAdjustment);
     document.getElementById('closeAddIngredientModal').addEventListener('click', () => document.getElementById('addIngredientModal').classList.remove('show'));
     document.getElementById('cancelAddIngredientBtn').addEventListener('click', () => document.getElementById('addIngredientModal').classList.remove('show'));
     document.getElementById('saveAddIngredientBtn').addEventListener('click', saveNewIngredient);
+
+    // Menu
+    document.getElementById('openAddMenuItemBtn').addEventListener('click', () => openMenuItemModal());
+    document.getElementById('closeMenuItemModal').addEventListener('click', () => document.getElementById('menuItemModal').classList.remove('show'));
+    document.getElementById('cancelMenuItemBtn').addEventListener('click', () => document.getElementById('menuItemModal').classList.remove('show'));
+    document.getElementById('saveMenuItemBtn').addEventListener('click', saveMenuItem);
+    document.getElementById('menuCategoryFilter').addEventListener('change', e => renderMenuTable(e.target.value));
+
+    // Staff (manager)
+    document.getElementById('openAddMgrStaffBtn').addEventListener('click', () => openMgrStaffModal());
+    document.getElementById('closeMgrStaffModal').addEventListener('click', () => document.getElementById('mgrStaffModal').classList.remove('show'));
+    document.getElementById('cancelMgrStaffBtn').addEventListener('click', () => document.getElementById('mgrStaffModal').classList.remove('show'));
+    document.getElementById('saveMgrStaffBtn').addEventListener('click', saveMgrStaff);
+
+    // Reports — period filter buttons (delegated, buttons added dynamically)
+    document.addEventListener('click', e => {
+        const btn = e.target.closest('.period-btn');
+        if (btn) loadPeriodReport(btn.dataset.period);
+    });
+
+    // Promotions (manager)
+    document.getElementById('openAddMgrPromoBtn').addEventListener('click', () => openMgrPromoModal());
+    document.getElementById('closeMgrPromoModal').addEventListener('click', () => document.getElementById('mgrPromoModal').classList.remove('show'));
+    document.getElementById('cancelMgrPromoBtn').addEventListener('click', () => document.getElementById('mgrPromoModal').classList.remove('show'));
+    document.getElementById('saveMgrPromoBtn').addEventListener('click', saveMgrPromo);
+
+    // Loyalty
+    document.getElementById('refreshLoyaltyBtn').addEventListener('click', loadLoyaltyTab);
+    document.getElementById('loyaltySearchBtn').addEventListener('click', searchLoyaltyCustomer);
+    document.getElementById('loyaltySearchPhone').addEventListener('keydown', e => {
+        if (e.key === 'Enter') searchLoyaltyCustomer();
+    });
 }
 
 function switchTab(tabId) {
-    document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
-    
-    const targetSec = document.getElementById(tabId);
-    if (targetSec) {
-        targetSec.classList.add('active');
-        
-        document.querySelectorAll('.sidebar-menu .menu-item-btn').forEach(btn => {
-            if (btn.getAttribute('data-target') === tabId) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
-        });
-
-        // Trigger updates depending on active tab
-        let tabTitle = 'Tổng quan chi nhánh';
-        if (tabId === 'dashboard-tab') {
-            tabTitle = 'Tổng quan chi nhánh';
-            loadDashboardTab();
-        } else if (tabId === 'inventory-tab') {
-            tabTitle = 'Quản lý kho hàng';
-            loadInventoryTab();
-        } else if (tabId === 'reports-tab') {
-            tabTitle = 'Báo cáo doanh số';
-            loadReportsTab();
-        } else if (tabId === 'staff-tab') {
-            tabTitle = 'Nhân viên & Ca trực';
-            loadStaffTab();
-        }
-        document.getElementById('currentTabTitle').textContent = tabTitle;
-    }
+    document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+    const sec = document.getElementById(tabId);
+    if (sec) sec.classList.add('active');
+    document.querySelectorAll('.sidebar-menu .menu-item-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.target === tabId);
+    });
+    const titles = {
+        'dashboard-tab':   'Tổng quan chi nhánh',
+        'inventory-tab':   'Quản lý kho hàng',
+        'reports-tab':     'Báo cáo doanh thu',
+        'menu-tab':        'Quản lý thực đơn',
+        'staff-tab':       'Quản lý nhân viên',
+        'promotions-tab':  'Khuyến mãi chi nhánh',
+        'loyalty-tab':     'Khách hàng thân thiết',
+    };
+    document.getElementById('currentTabTitle').textContent = titles[tabId] || '';
+    if (tabId === 'dashboard-tab')  loadDashboardTab();
+    if (tabId === 'inventory-tab')  loadInventoryTab();
+    if (tabId === 'reports-tab')    loadReportsTab();
+    if (tabId === 'menu-tab')       loadMenuTab();
+    if (tabId === 'staff-tab')      loadStaffTab();
+    if (tabId === 'promotions-tab') loadPromotionsTab();
+    if (tabId === 'loyalty-tab')    loadLoyaltyTab();
 }
 
-// ==============================================================================
-// UTILITY FUNCTIONS
-// ==============================================================================
+function emptyRow(cols, msg = 'Không có dữ liệu.') {
+    return `<tr><td colspan="${cols}" style="text-align:center;color:var(--text-3);padding:24px;">${msg}</td></tr>`;
+}
 
 function formatVND(amount) {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
-}
-
-function empty(val) {
-    return val === undefined || val === null || val.length === 0;
 }

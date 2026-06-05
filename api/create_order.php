@@ -1,16 +1,19 @@
 <?php
 // =============================================================
 // FILE : api/create_order.php
-// DESC : POS transaction to create orders, charge payment, deduct inventory and manage loyalty points
+// DESC : POS transaction — create order, charge payment, manage loyalty
+// Rules:
+//   - Order status = Completed immediately (payment at counter)
+//   - No table assignment
+//   - Loyalty: earn 1 pt per 1,000đ spent; redeem 1 pt = 1,000đ off
+//   - Promotion applied first, then loyalty discount
 // =============================================================
 
 require_once __DIR__ . '/_helpers.php';
 require_once __DIR__ . '/db.php';
 
-// Authentication required
 require_login();
 
-// Accept POST requests only
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json(['success' => false, 'error' => 'Phương thức không được hỗ trợ'], 405);
 }
@@ -20,39 +23,34 @@ if (!$input) {
     json(['success' => false, 'error' => 'Dữ liệu đầu vào không hợp lệ'], 400);
 }
 
-$order_type = $input['order_type'] ?? '';
-$table_id = $input['table_id'] ?? null;
-$customer_id = $input['customer_id'] ?? null;
-$payment_method = $input['payment_method'] ?? 'Cash';
+$order_type      = $input['order_type']      ?? 'takeaway';
+$customer_id     = $input['customer_id']     ?? null;
+$payment_method  = $input['payment_method']  ?? 'Cash';
 $points_redeemed = isset($input['points_redeemed']) ? (int)$input['points_redeemed'] : 0;
-$items = $input['items'] ?? [];
+$items           = $input['items']           ?? [];
 
-// Basic validations
-if (empty($order_type) || empty($items)) {
-    json(['success' => false, 'error' => 'Thiếu thông tin hình thức gọi món hoặc danh sách món ăn'], 400);
+$allowed_types = ['takeaway', 'pickup'];
+if (!in_array($order_type, $allowed_types) || empty($items)) {
+    json(['success' => false, 'error' => 'Thiếu thông tin loại đơn hoặc danh sách món'], 400);
 }
 
-$location_id = $_SESSION['location_id'];
-$staff_id = $_SESSION['staff_id'];
+$location_id = (int)$_SESSION['location_id'];
+$staff_id    = (int)$_SESSION['staff_id'];
 
-// Start Transaction
 $conn->begin_transaction();
 
 try {
-    // 1. Calculate pricing and verify items
-    $subtotal = 0.0;
+    // ── 1. Validate items & calculate subtotal ─────────────────
+    $subtotal      = 0.0;
     $items_details = [];
 
     foreach ($items as $cart_item) {
-        $item_id = (int)$cart_item['item_id'];
-        $quantity = (int)$cart_item['quantity'];
+        $item_id   = (int)$cart_item['item_id'];
+        $quantity  = (int)($cart_item['quantity'] ?? 1);
         $modifiers = $cart_item['modifiers'] ?? [];
 
-        if ($quantity <= 0) {
-            throw new Exception("Số lượng món ăn không hợp lệ.");
-        }
+        if ($quantity <= 0) throw new Exception("Số lượng món không hợp lệ.");
 
-        // Get menu item base price
         $item_stmt = $conn->prepare("SELECT item_name, base_price, is_available FROM menu_item WHERE item_id = ?");
         $item_stmt->bind_param('i', $item_id);
         $item_stmt->execute();
@@ -60,90 +58,47 @@ try {
         $item_stmt->close();
 
         if (!$item_db || !$item_db['is_available']) {
-            throw new Exception("Món ăn không tồn tại hoặc đã ngừng phục vụ.");
+            throw new Exception("Món không tồn tại hoặc đã ngừng phục vụ.");
         }
 
-        $base_price = (float)$item_db['base_price'];
+        $base_price      = (float)$item_db['base_price'];
         $modifiers_price = 0.0;
-        $mods_details = [];
+        $mods_details    = [];
 
-        // Fetch modifier option prices
         foreach ($modifiers as $opt_id) {
+            $opt_id_int = (int)$opt_id;
             $opt_stmt = $conn->prepare("SELECT option_name, price_delta FROM modifier_option WHERE option_id = ?");
-            $opt_stmt->bind_param('i', $opt_id);
+            $opt_stmt->bind_param('i', $opt_id_int);
             $opt_stmt->execute();
             $opt_db = $opt_stmt->get_result()->fetch_assoc();
             $opt_stmt->close();
 
-            if (!$opt_db) {
-                throw new Exception("Tùy chọn đính kèm không hợp lệ.");
-            }
-
+            if (!$opt_db) throw new Exception("Tùy chọn modifier không hợp lệ.");
             $modifiers_price += (float)$opt_db['price_delta'];
-            $mods_details[] = [
-                'option_id' => $opt_id,
-                'price_delta' => (float)$opt_db['price_delta']
-            ];
+            $mods_details[]   = ['option_id' => (int)$opt_id, 'price_delta' => (float)$opt_db['price_delta']];
         }
 
-        $unit_price = $base_price;
-        $line_subtotal = ($unit_price + $modifiers_price) * $quantity;
-        $subtotal += $line_subtotal;
+        $line_subtotal = ($base_price + $modifiers_price) * $quantity;
+        $subtotal     += $line_subtotal;
 
         $items_details[] = [
-            'item_id' => $item_id,
-            'quantity' => $quantity,
-            'unit_price' => $unit_price,
-            'subtotal' => $line_subtotal,
-            'modifiers' => $mods_details
+            'item_id'   => $item_id,
+            'quantity'  => $quantity,
+            'unit_price'=> $base_price,
+            'subtotal'  => $line_subtotal,
+            'modifiers' => $mods_details,
         ];
     }
 
-    // 2. Validate Customer and Loyalty Points
-    $points_earned = 0;
-    $loyalty_discount = 0.0;
-    
-    if ($customer_id) {
-        // Fetch current loyalty points balance
-        $cust_stmt = $conn->prepare("
-            SELECT loyalty_points 
-            FROM   customer 
-            WHERE  customer_id = ?
-        ");
-        $cust_stmt->bind_param('i', $customer_id);
-        $cust_stmt->execute();
-        $cust_db = $cust_stmt->get_result()->fetch_assoc();
-        $cust_stmt->close();
-
-        if (!$cust_db) {
-            throw new Exception("Khách hàng không tồn tại.");
-        }
-
-        if ($points_redeemed > 0) {
-            // Check if customer has enough points
-            if ($points_redeemed > $cust_db['loyalty_points']) {
-                throw new Exception("Điểm tích lũy khả dụng của khách hàng không đủ.");
-            }
-            
-            // 1 point = 100 VND
-            $loyalty_discount = $points_redeemed * 100.0;
-            if ($loyalty_discount > $subtotal) {
-                $loyalty_discount = $subtotal;
-                $points_redeemed = ceil($loyalty_discount / 100.0);
-            }
-        }
-    }
-
-    // 3. Check for Active Promotions (e.g. Happy Hour 10% off)
-    $promo_discount = 0.0;
+    // ── 2. Promotion (applied first) ───────────────────────────
+    $promo_discount  = 0.0;
     $applied_promo_id = null;
-    
-    // Look up active promotions matching current date
+
     $promo_stmt = $conn->prepare("
-        SELECT promotion_id, name, discount_type, discount_value 
-        FROM   promotion 
-        WHERE  is_active = 1 
-          AND  CURDATE() BETWEEN start_date AND end_date 
+        SELECT promotion_id, discount_type, discount_value
+        FROM   promotion
+        WHERE  is_active = 1
+          AND  CURDATE() BETWEEN start_date AND end_date
         ORDER BY promotion_id LIMIT 1
     ");
     $promo_stmt->execute();
@@ -151,155 +106,138 @@ try {
     $promo_stmt->close();
 
     if ($promo) {
-        $applied_promo_id = $promo['promotion_id'];
-        $discountable_amount = $subtotal - $loyalty_discount;
-        
-        if ($discountable_amount > 0) {
-            if ($promo['discount_type'] === 'percent') {
-                $promo_discount = round($discountable_amount * ($promo['discount_value'] / 100.0));
-            } else {
-                $promo_discount = (float)$promo['discount_value'];
-                if ($promo_discount > $discountable_amount) {
-                    $promo_discount = $discountable_amount;
-                }
-            }
+        $applied_promo_id = (int)$promo['promotion_id'];
+        if ($promo['discount_type'] === 'percent') {
+            $promo_discount = round($subtotal * ((float)$promo['discount_value'] / 100.0));
+        } else {
+            $promo_discount = min((float)$promo['discount_value'], $subtotal);
         }
     }
 
-    // Final Bill Total
-    $total_amount = $subtotal - $loyalty_discount - $promo_discount;
-    if ($total_amount < 0) {
-        $total_amount = 0;
+    $after_promo = $subtotal - $promo_discount;
+
+    // ── 3. Loyalty points validation & discount ────────────────
+    // Earn: 1 pt per 1,000đ of final amount
+    // Redeem: 1 pt = 1,000đ discount
+    $loyalty_discount = 0.0;
+
+    if ($customer_id) {
+        $cust_id_int = (int)$customer_id;
+        $cust_stmt = $conn->prepare("SELECT loyalty_points FROM customer WHERE customer_id = ?");
+        $cust_stmt->bind_param('i', $cust_id_int);
+        $cust_stmt->execute();
+        $cust_db = $cust_stmt->get_result()->fetch_assoc();
+        $cust_stmt->close();
+
+        if (!$cust_db) throw new Exception("Khách hàng không tồn tại.");
+
+        if ($points_redeemed > 0) {
+            if ($points_redeemed > (int)$cust_db['loyalty_points']) {
+                throw new Exception("Điểm tích lũy không đủ.");
+            }
+            $loyalty_discount = min($points_redeemed * 1000.0, $after_promo);
+            // Recalc actual points used in case discount capped
+            $points_redeemed = (int)ceil($loyalty_discount / 1000.0);
+        }
     }
 
-    // 4. Create Order
-    $order_status = 'Preparing'; // Placed orders automatically enter the KDS Prep Queue
-    $ins_order_stmt = $conn->prepare("
-        INSERT INTO orders (location_id, staff_id, customer_id, table_id, order_type, order_status, total_amount)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    ");
-    $ins_order_stmt->bind_param('iiiissd', $location_id, $staff_id, $customer_id, $table_id, $order_type, $order_status, $total_amount);
-    $ins_order_stmt->execute();
-    $order_id = $ins_order_stmt->insert_id;
-    $ins_order_stmt->close();
+    $total_amount = max(0.0, $after_promo - $loyalty_discount);
 
-    // 5. Insert Order Items & Modifiers
+    // ── 4. Insert order ────────────────────────────────────────
+    $order_status  = 'Completed';
+    $customer_id_n = $customer_id ? (int)$customer_id : null;
+    $ins_order = $conn->prepare("
+        INSERT INTO orders (location_id, staff_id, customer_id, order_type, order_status, total_amount)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ");
+    $ins_order->bind_param('iiissd', $location_id, $staff_id, $customer_id_n, $order_type, $order_status, $total_amount);
+    $ins_order->execute();
+    $order_id = (int)$conn->insert_id;
+    $ins_order->close();
+
+    // ── 5. Insert order_item + modifiers ───────────────────────
     foreach ($items_details as $item) {
-        $ins_item_stmt = $conn->prepare("
+        $ins_item = $conn->prepare("
             INSERT INTO order_item (order_id, item_id, quantity, unit_price, subtotal)
             VALUES (?, ?, ?, ?, ?)
         ");
-        $ins_item_stmt->bind_param('iiidd', $order_id, $item['item_id'], $item['quantity'], $item['unit_price'], $item['subtotal']);
-        $ins_item_stmt->execute();
-        $order_item_id = $ins_item_stmt->insert_id;
-        $ins_item_stmt->close();
+        $ins_item->bind_param('iiidd', $order_id, $item['item_id'], $item['quantity'], $item['unit_price'], $item['subtotal']);
+        $ins_item->execute();
+        $order_item_id = (int)$conn->insert_id;
+        $ins_item->close();
 
-        // Modifiers
         foreach ($item['modifiers'] as $mod) {
-            $ins_mod_stmt = $conn->prepare("
+            $ins_mod = $conn->prepare("
                 INSERT INTO order_item_modifier (order_item_id, option_id, price_delta_at_sale)
                 VALUES (?, ?, ?)
             ");
-            $ins_mod_stmt->bind_param('iid', $order_item_id, $mod['option_id'], $mod['price_delta']);
-            $ins_mod_stmt->execute();
-            $ins_mod_stmt->close();
+            $ins_mod->bind_param('iid', $order_item_id, $mod['option_id'], $mod['price_delta']);
+            $ins_mod->execute();
+            $ins_mod->close();
         }
     }
 
-    // 7. Insert Payment record
-    $ins_pay_stmt = $conn->prepare("
-        INSERT INTO payment (order_id, payment_method, amount_paid)
-        VALUES (?, ?, ?)
-    ");
-    $ins_pay_stmt->bind_param('isd', $order_id, $payment_method, $total_amount);
-    $ins_pay_stmt->execute();
-    $ins_pay_stmt->close();
+    // ── 6. Payment ─────────────────────────────────────────────
+    $ins_pay = $conn->prepare("INSERT INTO payment (order_id, payment_method, amount_paid) VALUES (?, ?, ?)");
+    $ins_pay->bind_param('isd', $order_id, $payment_method, $total_amount);
+    $ins_pay->execute();
+    $ins_pay->close();
 
-    // 8. Record applied Promotion
-    if ($applied_promo_id) {
-        $ins_promo_stmt = $conn->prepare("
-            INSERT INTO order_promotion (order_id, promotion_id, amount_discounted)
-            VALUES (?, ?, ?)
-        ");
-        $ins_promo_stmt->bind_param('iid', $order_id, $applied_promo_id, $promo_discount);
-        $ins_promo_stmt->execute();
-        $ins_promo_stmt->close();
+    // ── 7. Promotion record ────────────────────────────────────
+    if ($applied_promo_id && $promo_discount > 0) {
+        $ins_promo = $conn->prepare("INSERT INTO order_promotion (order_id, promotion_id, amount_discounted) VALUES (?, ?, ?)");
+        $ins_promo->bind_param('iid', $order_id, $applied_promo_id, $promo_discount);
+        $ins_promo->execute();
+        $ins_promo->close();
     }
 
-    // 9. Loyalty Points earn and redeem
+    // ── 8. Loyalty transactions ────────────────────────────────
+    $points_earned = 0;
     if ($customer_id) {
-        // Points Earned = 1 point per 1000 VND spent
-        $points_earned = floor($total_amount / 1000);
-        
-        // Log redemption
         if ($points_redeemed > 0) {
-            $ins_txn_stmt = $conn->prepare("
-                INSERT INTO loyalty_transaction (customer_id, order_id, points_change, txn_type)
-                VALUES (?, ?, ?, 'redeem')
-            ");
-            $ins_txn_stmt->bind_param('iii', $customer_id, $order_id, $points_redeemed);
-            $ins_txn_stmt->execute();
-            $ins_txn_stmt->close();
+            $ins_redeem = $conn->prepare("INSERT INTO loyalty_transaction (customer_id, order_id, points_change, txn_type) VALUES (?, ?, ?, 'redeem')");
+            $ins_redeem->bind_param('iii', $customer_id, $order_id, $points_redeemed);
+            $ins_redeem->execute();
+            $ins_redeem->close();
         }
 
-        // Log earning
+        $points_earned = (int)floor($total_amount / 1000.0);
         if ($points_earned > 0) {
-            $ins_txn_stmt = $conn->prepare("
-                INSERT INTO loyalty_transaction (customer_id, order_id, points_change, txn_type)
-                VALUES (?, ?, ?, 'earn')
-            ");
-            $ins_txn_stmt->bind_param('iii', $customer_id, $order_id, $points_earned);
-            $ins_txn_stmt->execute();
-            $ins_txn_stmt->close();
+            $ins_earn = $conn->prepare("INSERT INTO loyalty_transaction (customer_id, order_id, points_change, txn_type) VALUES (?, ?, ?, 'earn')");
+            $ins_earn->bind_param('iii', $customer_id, $order_id, $points_earned);
+            $ins_earn->execute();
+            $ins_earn->close();
         }
 
-        // Update cached loyalty points
-        $new_points_change = $points_earned - $points_redeemed;
-        $upd_cust_stmt = $conn->prepare("
-            UPDATE customer 
-            SET    loyalty_points = loyalty_points + ? 
-            WHERE  customer_id = ?
-        ");
-        $upd_cust_stmt->bind_param('ii', $new_points_change, $customer_id);
-        $upd_cust_stmt->execute();
-        $upd_cust_stmt->close();
+        $net_change = $points_earned - $points_redeemed;
+        $upd_cust = $conn->prepare("UPDATE customer SET loyalty_points = loyalty_points + ? WHERE customer_id = ?");
+        $upd_cust->bind_param('ii', $net_change, $customer_id);
+        $upd_cust->execute();
+        $upd_cust->close();
     }
 
-    // 10. Update table status if dine-in
-    if ($order_type === 'dine_in' && $table_id) {
-        $upd_table_stmt = $conn->prepare("
-            UPDATE dining_table 
-            SET    status = 'Occupied' 
-            WHERE  table_id = ?
-        ");
-        $upd_table_stmt->bind_param('i', $table_id);
-        $upd_table_stmt->execute();
-        $upd_table_stmt->close();
-    }
+    // ── 9. Audit log ───────────────────────────────────────────
+    $details = "Order #$order_id | Total: " . number_format($total_amount) . "đ | Payment: $payment_method";
+    $ins_audit = $conn->prepare("INSERT INTO audit_log (staff_id, action_type, table_affected, record_id, details) VALUES (?, 'CREATE_ORDER', 'orders', ?, ?)");
+    $ins_audit->bind_param('iis', $staff_id, $order_id, $details);
+    $ins_audit->execute();
+    $ins_audit->close();
 
-    // 11. Write Audit Log
-    $details = "Created order #$order_id with total amount: " . number_format($total_amount) . "đ";
-    $ins_audit_stmt = $conn->prepare("
-        INSERT INTO audit_log (staff_id, action_type, table_affected, record_id, details)
-        VALUES (?, 'CREATE_ORDER', 'orders', ?, ?)
-    ");
-    $ins_audit_stmt->bind_param('iis', $staff_id, $order_id, $details);
-    $ins_audit_stmt->execute();
-    $ins_audit_stmt->close();
-
-    // Commit Transaction
     $conn->commit();
-    
+
     json([
-        'success' => true,
-        'order_id' => $order_id,
-        'total_amount' => $total_amount,
-        'points_earned' => $points_earned,
-        'message' => 'Đơn hàng đã được tạo thành công!'
+        'success'        => true,
+        'order_id'       => $order_id,
+        'subtotal'       => $subtotal,
+        'promo_discount' => $promo_discount,
+        'loyalty_discount'=> $loyalty_discount,
+        'total_amount'   => $total_amount,
+        'points_earned'  => $points_earned,
+        'points_redeemed'=> $points_redeemed,
+        'message'        => 'Đơn hàng đã được tạo thành công!',
     ]);
 
 } catch (Exception $e) {
-    // Rollback on any failure
     $conn->rollback();
-    json(['success' => false, 'error' => 'Lỗi tạo đơn hàng: ' . $e->getMessage()], 500);
+    json(['success' => false, 'error' => 'Lỗi tạo đơn: ' . $e->getMessage()], 500);
 }
