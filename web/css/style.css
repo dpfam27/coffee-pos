@@ -1210,6 +1210,13 @@ select.form-control {
 }
 
 @media (max-width: 768px) {
+  /* ── 2-col grids → stack vertically ── */
+  .two-col-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
   /* ── App shell ── */
   .app-container { grid-template-columns: 1fr; }
 
