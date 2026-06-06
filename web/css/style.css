@@ -1128,6 +1128,7 @@ select.form-control {
 }
 
 @media (max-width: 768px) {
+  /* ── App shell ── */
   .app-container { grid-template-columns: 1fr; }
 
   .sidebar {
@@ -1151,21 +1152,120 @@ select.form-control {
   .logout-btn span { display: inline; }
 
   .nav-toggle { display: inline-flex; }
-  .top-bar { padding: 0 14px; }
+  .top-bar { padding: 0 14px; gap: 8px; }
+  .top-bar-meta { gap: 10px; }
   .content-body { padding: 14px; }
 
-  .pos-layout { grid-template-columns: 1fr; height: auto; }
-  .pos-menu-column { border-right: none; border-bottom: 1px solid var(--b1); }
-  .pos-cart-column { height: auto; min-height: 400px; }
-  .menu-grid { grid-template-columns: repeat(3, 1fr); }
+  /* ── Tables: horizontal scroll ── */
+  .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .custom-table { min-width: 520px; }
+  .custom-table th,
+  .custom-table td { padding: 9px 12px; font-size: 12px; }
 
+  /* ── Table header bar: stack on small ── */
+  .table-header-bar {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+  .table-header-bar > div,
+  .table-header-bar > input { flex-shrink: 1; }
+
+  /* ── Stat cards ── */
   .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-  .modal-content { max-width: 100%; }
+  .stat-value { font-size: 18px; }
+
+  /* ── Modal ── */
+  .modal { padding: 12px; align-items: flex-end; }
+  .modal-content {
+    max-width: 100%;
+    border-radius: var(--r3) var(--r3) 0 0;
+    max-height: 90vh;
+  }
+
+  /* ── POS layout: stack vertically ── */
+  .pos-layout {
+    grid-template-columns: 1fr;
+    height: auto;
+    overflow: visible;
+  }
+  .pos-menu-column {
+    border-right: none;
+    border-bottom: 1px solid var(--b1);
+    height: 55vh;
+  }
+  .menu-grid { grid-template-columns: repeat(3, 1fr); }
+  .pos-cart-column { height: auto; min-height: 360px; }
+
+  /* ── Buttons in header bars: smaller ── */
+  .table-header-bar .btn { font-size: 12px; padding: 6px 10px; }
+
+  /* ── Login ── */
+  .login-wrapper { padding: 16px; }
+  .login-card { padding: 28px 20px 22px; }
 }
 
 @media (max-width: 480px) {
+  /* ── Top bar: hide non-essential meta ── */
   .top-bar-meta .meta-item:not(:last-child) { display: none; }
-  .stats-grid { grid-template-columns: 1fr; }
+  .top-bar-title h3 { font-size: 13px; }
+
+  /* ── Stat cards: single column ── */
+  .stats-grid { grid-template-columns: 1fr; gap: 8px; }
+  .stat-card { padding: 12px 14px; }
+  .stat-value { font-size: 20px; }
+
+  /* ── Content padding ── */
+  .content-body { padding: 10px; }
+
+  /* ── Tables ── */
+  .custom-table { min-width: 460px; }
+  .custom-table th,
+  .custom-table td { padding: 8px 10px; font-size: 11px; }
+
+  /* ── Table header bar: stack title and actions ── */
+  .table-header-bar { flex-direction: column; align-items: flex-start; }
+  .table-header-bar > div { width: 100%; justify-content: flex-start; }
+  .table-header-bar input[type="text"] { width: 100% !important; }
+
+  /* ── POS menu grid: 2 columns ── */
   .menu-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-  .content-body { padding: 12px; }
+  .menu-card { min-height: 80px; padding: 10px; }
+  .menu-card-title { font-size: 12px; }
+  .pos-menu-column { height: 50vh; }
+
+  /* ── Modal: full bottom sheet ── */
+  .modal { padding: 0; }
+  .modal-content {
+    border-radius: var(--r3) var(--r3) 0 0;
+    max-height: 92vh;
+  }
+  .modal-body { padding: 14px; }
+
+  /* ── Form controls ── */
+  .form-control { height: 38px; font-size: 13px; }
+
+  /* ── Badges: smaller ── */
+  .badge { font-size: 9px; padding: 2px 6px; }
+
+  /* ── Buttons ── */
+  .btn { font-size: 12px; }
+  .btn-block { height: 42px; }
+
+  /* ── Login card ── */
+  .login-wrapper { padding: 12px; }
+  .login-card { padding: 24px 16px 18px; border-radius: var(--r2); }
+  .logo-container { width: 40px; height: 40px; font-size: 17px; }
+  .brand-header h1 { font-size: 16px; }
+  .brand-header { margin-bottom: 24px; gap: 8px; }
+
+  /* ── POS history tab table ── */
+  .pos-history-table { min-width: 400px; }
+
+  /* ── Grid layouts inside tabs ── */
+  [style*="grid-template-columns:1fr 1fr"],
+  [style*="grid-template-columns: 1fr 1fr"] {
+    display: flex !important;
+    flex-direction: column !important;
+  }
 }
