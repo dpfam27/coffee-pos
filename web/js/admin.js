@@ -23,6 +23,13 @@ async function initApp() {
             document.getElementById('userName').textContent   = currentUser.name;
             document.getElementById('userRole').textContent   = 'Quản trị viên chuỗi';
             document.getElementById('userAvatar').textContent = currentUser.name.charAt(0);
+            // Sync mobile bottom-nav account dropdown
+            const _av = document.getElementById('bnAvatarAdmin');
+            const _nm = document.getElementById('bnNameAdmin');
+            const _rl = document.getElementById('bnRoleAdmin');
+            if (_av) _av.textContent = currentUser.name.charAt(0);
+            if (_nm) _nm.textContent = currentUser.name;
+            if (_rl) _rl.textContent = 'Quản trị viên chuỗi';
         } else {
             window.location.href = 'index.html';
             return;
@@ -552,6 +559,121 @@ async function viewAdminInvoice(orderId) {
     } catch (err) { alert('Lỗi tải hóa đơn'); }
 }
 
+// ── MENU CRUD (Admin) ─────────────────────────────────────────
+
+let adminMenuData    = [];
+let adminEditingItemId = null;
+
+async function loadMenuTab() {
+    try {
+        const res = await API.get('menu.php?all=1');
+        adminMenuData = res?.data || [];
+        const catSel = document.getElementById('adminMenuCategoryFilter');
+        catSel.innerHTML = '<option value="all">Tất cả danh mục</option>';
+        adminMenuData.forEach(cat => {
+            catSel.innerHTML += `<option value="${cat.category_id}">${cat.category_name}</option>`;
+        });
+        renderAdminMenuTable('all');
+    } catch (err) { console.error('loadMenuTab:', err); }
+}
+
+function renderAdminMenuTable(catId) {
+    const tbody = document.getElementById('adminMenuTableBody');
+    tbody.innerHTML = '';
+    let found = false;
+    adminMenuData.forEach(cat => {
+        if (catId !== 'all' && cat.category_id != catId) return;
+        cat.items.forEach(item => {
+            found = true;
+            const availBadge = item.is_available
+                ? '<span class="badge badge-success">Đang bán</span>'
+                : '<span class="badge badge-secondary">Tạm ngừng</span>';
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${item.item_id}</td>
+                <td><strong>${item.item_name}</strong></td>
+                <td>${cat.category_name}</td>
+                <td>${formatVND(item.base_price)}</td>
+                <td>${availBadge}</td>
+                <td>
+                    <button class="btn btn-secondary" style="padding:4px 8px;font-size:.75rem;margin-right:2px;" onclick='openAdminMenuItemModal(${JSON.stringify(item)}, ${cat.category_id})'>
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                    <button class="btn btn-secondary" style="padding:4px 8px;font-size:.75rem;margin-right:2px;" onclick="adminToggleMenuAvailability(${item.item_id}, '${item.item_name}', ${item.is_available})">
+                        <i class="fa-solid fa-power-off"></i>
+                    </button>
+                    <button class="btn btn-danger" style="padding:4px 8px;font-size:.75rem;" onclick="adminDeleteMenuItem(${item.item_id}, '${item.item_name}')">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </td>`;
+            tbody.appendChild(tr);
+        });
+    });
+    if (!found) tbody.innerHTML = emptyRow(6);
+}
+
+function openAdminMenuItemModal(item = null, catId = null) {
+    adminEditingItemId = item ? item.item_id : null;
+    document.getElementById('adminMenuItemModalTitle').textContent = item ? 'Sửa món ăn' : 'Thêm món mới';
+    document.getElementById('adminMenuItemName').value  = item?.item_name  || '';
+    document.getElementById('adminMenuItemPrice').value = item?.base_price || '';
+    const catSel = document.getElementById('adminMenuItemCategory');
+    catSel.innerHTML = '';
+    adminMenuData.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat.category_id;
+        opt.textContent = cat.category_name;
+        if (catId && cat.category_id == catId) opt.selected = true;
+        catSel.appendChild(opt);
+    });
+    document.getElementById('adminMenuItemAvailable').checked = item ? !!item.is_available : true;
+    document.getElementById('adminMenuItemModal').classList.add('show');
+}
+
+async function saveAdminMenuItem() {
+    const payload = {
+        item_name:    document.getElementById('adminMenuItemName').value.trim(),
+        category_id:  parseInt(document.getElementById('adminMenuItemCategory').value),
+        base_price:   parseFloat(document.getElementById('adminMenuItemPrice').value),
+        is_available: document.getElementById('adminMenuItemAvailable').checked ? 1 : 0,
+    };
+    if (!payload.item_name || !payload.category_id || payload.base_price <= 0) {
+        alert('Vui lòng điền đầy đủ tên, danh mục và giá hợp lệ!'); return;
+    }
+    if (adminEditingItemId) payload._method = 'PUT', payload.item_id = adminEditingItemId;
+    try {
+        const res = await API.post('menu.php', payload);
+        if (res?.success) {
+            document.getElementById('adminMenuItemModal').classList.remove('show');
+            await loadMenuTab();
+            renderAdminMenuTable(document.getElementById('adminMenuCategoryFilter').value);
+        } else { alert(res?.error || 'Lỗi lưu món'); }
+    } catch (err) { alert(err.message); }
+}
+
+async function adminToggleMenuAvailability(itemId, name, currentState) {
+    const action = currentState ? 'tạm ngừng' : 'mở bán lại';
+    if (!confirm(`${action} món "${name}"?`)) return;
+    try {
+        const res = await API.post('menu.php', { _method: 'DELETE', item_id: itemId });
+        if (res?.success) {
+            await loadMenuTab();
+            renderAdminMenuTable(document.getElementById('adminMenuCategoryFilter').value);
+        } else { alert(res?.error || 'Lỗi'); }
+    } catch (err) { alert(err.message); }
+}
+
+async function adminDeleteMenuItem(itemId, name) {
+    if (!confirm(`Xoá vĩnh viễn món "${name}"? Không thể hoàn tác.`)) return;
+    try {
+        const res = await API.post('menu.php', { _method: 'HARD_DELETE', item_id: itemId });
+        if (res?.success) {
+            await loadMenuTab();
+            renderAdminMenuTable(document.getElementById('adminMenuCategoryFilter').value);
+        } else { alert(res?.error || 'Lỗi xoá món'); }
+    } catch (err) { alert(err.message); }
+}
+
 // ── AUDIT LOG ─────────────────────────────────────────────────
 
 async function loadAuditLogTab() {
@@ -634,6 +756,13 @@ function setupEventListeners() {
     document.getElementById('cancelLoyaltyEditBtn').addEventListener('click', () => document.getElementById('loyaltyEditModal').classList.remove('show'));
     document.getElementById('saveLoyaltyEditBtn').addEventListener('click', saveLoyaltyEdit);
 
+    // Menu tab (Admin)
+    document.getElementById('adminOpenAddMenuItemBtn').addEventListener('click', () => openAdminMenuItemModal());
+    document.getElementById('adminCloseMenuItemModal').addEventListener('click', () => document.getElementById('adminMenuItemModal').classList.remove('show'));
+    document.getElementById('adminCancelMenuItemBtn').addEventListener('click', () => document.getElementById('adminMenuItemModal').classList.remove('show'));
+    document.getElementById('adminSaveMenuItemBtn').addEventListener('click', saveAdminMenuItem);
+    document.getElementById('adminMenuCategoryFilter').addEventListener('change', e => renderAdminMenuTable(e.target.value));
+
     // Audit Log tab
     document.getElementById('refreshAuditLogBtn').addEventListener('click', loadAuditLogTab);
 }
@@ -709,6 +838,7 @@ function switchTab(tabId) {
     const titles = {
         'reports-tab':       'Báo cáo doanh thu',
         'branches-tab':      'Quản lý chi nhánh',
+        'menu-tab':          'Quản lý thực đơn',
         'promotions-tab':    'Quản lý khuyến mãi',
         'staff-tab':         'Quản lý nhân viên',
         'order-history-tab': 'Lịch sử đơn hàng — Toàn chuỗi',
@@ -717,6 +847,7 @@ function switchTab(tabId) {
     };
     document.getElementById('currentTabTitle').textContent = titles[tabId] || '';
     if (tabId === 'branches-tab')      loadBranchesTab();
+    if (tabId === 'menu-tab')          loadMenuTab();
     if (tabId === 'promotions-tab')    loadPromotionsTab();
     if (tabId === 'staff-tab')         loadStaffTab();
     if (tabId === 'reports-tab')       loadReportsTab();

@@ -31,6 +31,7 @@
                 <li><button class="menu-item-btn active" data-target="reports-tab"><i class="fa-solid fa-chart-pie"></i><span>Báo cáo doanh thu</span></button></li>
                 <li><button class="menu-item-btn" data-target="branches-tab"><i class="fa-solid fa-network-wired"></i><span>Chi nhánh</span></button></li>
                 <li><button class="menu-item-btn" data-target="staff-tab"><i class="fa-solid fa-users"></i><span>Nhân viên</span></button></li>
+                <li><button class="menu-item-btn" data-target="menu-tab"><i class="fa-solid fa-utensils"></i><span>Quản lý thực đơn</span></button></li>
                 <li><button class="menu-item-btn" data-target="promotions-tab"><i class="fa-solid fa-tags"></i><span>Khuyến mãi</span></button></li>
                 <li><button class="menu-item-btn" data-target="order-history-tab"><i class="fa-solid fa-clock-rotate-left"></i><span>Lịch sử đơn hàng</span></button></li>
                 <li><button class="menu-item-btn" data-target="loyalty-tab"><i class="fa-solid fa-award"></i><span>Khách hàng thân thiết</span></button></li>
@@ -125,6 +126,27 @@
                     </div>
                 </section>
 
+                <!-- Tab: Menu CRUD (Admin only) -->
+                <section id="menu-tab" class="view-section">
+                    <div class="table-container">
+                        <div class="table-header-bar">
+                            <h4>Quản lý thực đơn</h4>
+                            <div style="display:flex;gap:8px;align-items:center;">
+                                <select class="form-control" id="adminMenuCategoryFilter" style="padding:7px 12px;font-size:.85rem;min-width:180px;">
+                                    <option value="all">Tất cả danh mục</option>
+                                </select>
+                                <button class="btn btn-primary" id="adminOpenAddMenuItemBtn" style="padding:8px 16px;font-size:.85rem;">
+                                    <i class="fa-solid fa-plus"></i> Thêm món
+                                </button>
+                            </div>
+                        </div>
+                        <table class="custom-table">
+                            <thead><tr><th>ID</th><th>Tên món</th><th>Danh mục</th><th>Giá</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+                            <tbody id="adminMenuTableBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
                 <!-- Tab 4: Promotions CRUD -->
                 <section id="promotions-tab" class="view-section">
                     <div class="table-container">
@@ -212,28 +234,6 @@
                     </div>
                 </section>
 
-                <!-- Modal chỉnh điểm -->
-                <div class="modal" id="loyaltyEditModal">
-                    <div class="modal-content" style="max-width:400px;">
-                        <div class="modal-header">
-                            <h3>Chỉnh điểm tích lũy</h3>
-                            <button class="modal-close" id="closeLoyaltyEditModal">&times;</button>
-                        </div>
-                        <div class="modal-body">
-                            <p id="loyaltyEditName" style="font-weight:600;margin-bottom:4px;"></p>
-                            <p id="loyaltyEditPhone" style="font-size:12px;color:var(--t2);margin-bottom:16px;"></p>
-                            <div class="form-group" style="margin-bottom:14px;">
-                                <label style="font-size:.8rem;">Điểm tích lũy mới <span style="color:var(--red);">*</span></label>
-                                <input type="number" id="loyaltyEditPoints" class="form-control" min="0" style="padding:9px 12px;font-size:.875rem;">
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn btn-secondary" id="cancelLoyaltyEditBtn">Hủy</button>
-                            <button class="btn btn-primary" id="saveLoyaltyEditBtn">Lưu</button>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Tab 8: Audit Log -->
                 <section id="audit-log-tab" class="view-section">
                     <div class="table-container">
@@ -255,6 +255,62 @@
     <!-- ============================================================
          MODALS
          ============================================================ -->
+
+    <!-- Loyalty Edit Modal -->
+    <div class="modal" id="loyaltyEditModal">
+        <div class="modal-content" style="max-width:400px;">
+            <div class="modal-header">
+                <h3>Chỉnh điểm tích lũy</h3>
+                <button class="modal-close" id="closeLoyaltyEditModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="loyaltyEditName" style="font-weight:600;margin-bottom:4px;"></p>
+                <p id="loyaltyEditPhone" style="font-size:12px;color:var(--t2);margin-bottom:16px;"></p>
+                <div class="form-group" style="margin-bottom:14px;">
+                    <label style="font-size:.8rem;">Điểm tích lũy mới <span style="color:var(--red);">*</span></label>
+                    <input type="number" id="loyaltyEditPoints" class="form-control" min="0" style="padding:9px 12px;font-size:.875rem;">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelLoyaltyEditBtn">Hủy</button>
+                <button class="btn btn-primary" id="saveLoyaltyEditBtn">Lưu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Menu Item Modal -->
+    <div class="modal" id="adminMenuItemModal">
+        <div class="modal-content" style="max-width:440px;">
+            <div class="modal-header">
+                <h3 id="adminMenuItemModalTitle">Thêm món mới</h3>
+                <button class="modal-close" id="adminCloseMenuItemModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group" style="margin-bottom:14px;">
+                    <label style="font-size:.8rem;">Tên món <span style="color:var(--red);">*</span></label>
+                    <input type="text" id="adminMenuItemName" class="form-control" placeholder="VD: Cà phê sữa đá" style="padding:9px 12px;font-size:.875rem;">
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+                    <div class="form-group">
+                        <label style="font-size:.8rem;">Danh mục <span style="color:var(--red);">*</span></label>
+                        <select id="adminMenuItemCategory" class="form-control" style="padding:9px 12px;font-size:.875rem;"></select>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size:.8rem;">Giá (VND) <span style="color:var(--red);">*</span></label>
+                        <input type="number" id="adminMenuItemPrice" class="form-control" placeholder="VD: 55000" min="0" style="padding:9px 12px;font-size:.875rem;">
+                    </div>
+                </div>
+                <div class="form-group" style="display:flex;align-items:center;gap:10px;">
+                    <input type="checkbox" id="adminMenuItemAvailable" checked style="width:16px;height:16px;cursor:pointer;">
+                    <label for="adminMenuItemAvailable" style="font-size:.85rem;cursor:pointer;margin:0;">Đang bán</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="adminCancelMenuItemBtn">Hủy</button>
+                <button class="btn btn-primary" id="adminSaveMenuItemBtn"><i class="fa-solid fa-floppy-disk"></i> Lưu</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Branch Modal -->
     <div class="modal" id="branchModal">
@@ -391,22 +447,38 @@
             <button class="bottom-nav-btn active" data-target="reports-tab"><i class="fa-solid fa-chart-pie"></i>Báo cáo</button>
             <button class="bottom-nav-btn" data-target="branches-tab"><i class="fa-solid fa-network-wired"></i>Chi nhánh</button>
             <button class="bottom-nav-btn" data-target="staff-tab"><i class="fa-solid fa-users"></i>Nhân viên</button>
+            <button class="bottom-nav-btn" data-target="menu-tab"><i class="fa-solid fa-utensils"></i>Quản lý thực đơn</button>
             <button class="bottom-nav-btn" data-target="promotions-tab"><i class="fa-solid fa-tags"></i>Khuyến mãi</button>
-            <button class="bottom-nav-btn" data-target="order-history-tab"><i class="fa-solid fa-clock-rotate-left"></i>Đơn hàng</button>
             <button class="bottom-nav-btn" data-target="loyalty-tab"><i class="fa-solid fa-award"></i>KH</button>
             <button class="bottom-nav-btn" data-target="audit-log-tab"><i class="fa-solid fa-shield-halved"></i>Nhật ký</button>
+            <button class="bottom-nav-btn account-btn" id="bnAccountBtn">
+                <div class="bn-avatar" id="bnAvatarAdmin">A</div>
+                Tài khoản
+            </button>
         </div>
     </nav>
+
+    <!-- Account dropdown (above bottom nav, mobile) -->
+    <div class="bn-account-dropdown" id="bnDropdownAdmin">
+        <div class="bn-dropdown-header">
+            <div class="name" id="bnNameAdmin">Admin</div>
+            <div class="role-badge" id="bnRoleAdmin">Quản trị viên</div>
+        </div>
+        <button class="bn-dropdown-item danger" id="bnLogoutAdmin">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> Đăng xuất
+        </button>
+    </div>
 
     <script src="js/api.js"></script>
     <script src="js/admin.js"></script>
     <script src="js/preview-toolbar.js"></script>
     <script>
-    document.querySelectorAll('.bottom-nav-btn').forEach(btn => {
+    document.querySelectorAll('.bottom-nav-btn:not(.account-btn)').forEach(btn => {
         btn.addEventListener('click', () => {
             switchTab(btn.dataset.target);
             document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
+            document.getElementById('bnDropdownAdmin').classList.remove('show');
         });
     });
     // Sync bottom nav with sidebar clicks
@@ -416,6 +488,26 @@
             document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.toggle('active', b.dataset.target === t));
         });
     });
+    // Account dropdown toggle
+    document.getElementById('bnAccountBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.getElementById('bnDropdownAdmin').classList.toggle('show');
+    });
+    document.addEventListener('click', () => {
+        document.getElementById('bnDropdownAdmin').classList.remove('show');
+    });
+    document.getElementById('bnLogoutAdmin').addEventListener('click', () => {
+        document.getElementById('logoutBtn').click();
+    });
+    // Populate account info from loaded user data
+    function updateBnAccount(name, role) {
+        const avatarEl = document.getElementById('bnAvatarAdmin');
+        const nameEl = document.getElementById('bnNameAdmin');
+        const roleEl = document.getElementById('bnRoleAdmin');
+        if (avatarEl && name) avatarEl.textContent = name.charAt(0).toUpperCase();
+        if (nameEl && name) nameEl.textContent = name;
+        if (roleEl && role) roleEl.textContent = role;
+    }
     </script>
 </body>
 </html>

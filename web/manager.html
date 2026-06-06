@@ -30,7 +30,7 @@
             <ul class="sidebar-menu">
                 <li><button class="menu-item-btn active" data-target="reports-tab"><i class="fa-solid fa-chart-pie"></i><span>Báo cáo doanh thu</span></button></li>
                 <li><button class="menu-item-btn" data-target="inventory-tab"><i class="fa-solid fa-warehouse"></i><span>Quản lý kho hàng</span></button></li>
-                <li><button class="menu-item-btn" data-target="menu-tab"><i class="fa-solid fa-utensils"></i><span>Quản lý thực đơn</span></button></li>
+                <li><button class="menu-item-btn" data-target="menu-tab"><i class="fa-solid fa-utensils"></i><span>Thực đơn</span></button></li>
                 <li><button class="menu-item-btn" data-target="staff-tab"><i class="fa-solid fa-users"></i><span>Nhân viên</span></button></li>
                 <li><button class="menu-item-btn" data-target="promotions-tab"><i class="fa-solid fa-tags"></i><span>Khuyến mãi</span></button></li>
                 <li><button class="menu-item-btn" data-target="loyalty-tab"><i class="fa-solid fa-award"></i><span>Khách hàng thân thiết</span></button></li>
@@ -82,7 +82,7 @@
                             </div>
                         </div>
                         <table class="custom-table">
-                            <thead><tr><th>ID</th><th>Tên nguyên liệu</th><th>Tồn kho</th><th>Đơn vị</th><th>Định mức tối thiểu</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+                            <thead><tr><th>ID</th><th>Tên nguyên liệu</th><th>Tồn kho</th><th>Đơn vị</th><th>Định mức tối thiểu</th><th>Thao tác</th></tr></thead>
                             <tbody id="inventoryTableBody"></tbody>
                         </table>
                     </div>
@@ -124,14 +124,11 @@
                     <div class="table-container">
                         <div class="table-header-bar">
                             <div style="display:flex;align-items:center;gap:12px;">
-                                <h4>Quản lý thực đơn</h4>
+                                <h4>Thực đơn</h4>
                                 <select class="form-control" id="menuCategoryFilter" style="padding:7px 12px;font-size:.85rem;min-width:160px;">
                                     <option value="all">Tất cả danh mục</option>
                                 </select>
                             </div>
-                            <button class="btn btn-primary" id="openAddMenuItemBtn" style="padding:8px 16px;font-size:.85rem;">
-                                <i class="fa-solid fa-plus"></i> Thêm món
-                            </button>
                         </div>
                         <table class="custom-table">
                             <thead><tr><th>ID</th><th>Tên món</th><th>Danh mục</th><th>Giá</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
@@ -334,18 +331,34 @@
             <button class="bottom-nav-btn" data-target="staff-tab"><i class="fa-solid fa-users"></i>Nhân viên</button>
             <button class="bottom-nav-btn" data-target="promotions-tab"><i class="fa-solid fa-tags"></i>KM</button>
             <button class="bottom-nav-btn" data-target="loyalty-tab"><i class="fa-solid fa-award"></i>KH</button>
+            <button class="bottom-nav-btn account-btn" id="bnAccountBtnMgr">
+                <div class="bn-avatar" id="bnAvatarMgr">M</div>
+                Tài khoản
+            </button>
         </div>
     </nav>
+
+    <!-- Account dropdown (above bottom nav, mobile) -->
+    <div class="bn-account-dropdown" id="bnDropdownMgr">
+        <div class="bn-dropdown-header">
+            <div class="name" id="bnNameMgr">Manager</div>
+            <div class="role-badge" id="bnRoleMgr">Cửa hàng trưởng</div>
+        </div>
+        <button class="bn-dropdown-item danger" id="bnLogoutMgr">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> Đăng xuất
+        </button>
+    </div>
 
     <script src="js/api.js"></script>
     <script src="js/manager.js"></script>
     <script src="js/preview-toolbar.js"></script>
     <script>
-    document.querySelectorAll('.bottom-nav-btn').forEach(btn => {
+    document.querySelectorAll('.bottom-nav-btn:not(.account-btn)').forEach(btn => {
         btn.addEventListener('click', () => {
             switchTab(btn.dataset.target);
             document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
+            document.getElementById('bnDropdownMgr').classList.remove('show');
         });
     });
     document.querySelectorAll('.menu-item-btn').forEach(btn => {
@@ -353,6 +366,17 @@
             const t = btn.dataset.target;
             document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.toggle('active', b.dataset.target === t));
         });
+    });
+    // Account dropdown toggle
+    document.getElementById('bnAccountBtnMgr').addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.getElementById('bnDropdownMgr').classList.toggle('show');
+    });
+    document.addEventListener('click', () => {
+        document.getElementById('bnDropdownMgr').classList.remove('show');
+    });
+    document.getElementById('bnLogoutMgr').addEventListener('click', () => {
+        document.getElementById('logoutBtn').click();
     });
     </script>
 </body>

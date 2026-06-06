@@ -28,6 +28,14 @@ async function initApp() {
             document.getElementById('userName').textContent    = currentUser.name;
             document.getElementById('userRole').textContent    = currentUser.role === 'Admin' ? 'Quản trị viên' : 'Cửa hàng trưởng';
             document.getElementById('userAvatar').textContent  = currentUser.name.charAt(0);
+            // Sync mobile bottom-nav account dropdown
+            const _roleLabel = currentUser.role === 'Admin' ? 'Quản trị viên' : 'Cửa hàng trưởng';
+            const _av = document.getElementById('bnAvatarMgr');
+            const _nm = document.getElementById('bnNameMgr');
+            const _rl = document.getElementById('bnRoleMgr');
+            if (_av) _av.textContent = currentUser.name.charAt(0);
+            if (_nm) _nm.textContent = currentUser.name;
+            if (_rl) _rl.textContent = _roleLabel;
             document.getElementById('currentBranch').textContent = 'Chi nhánh: ' + (currentUser.location_name || '');
         } else {
             window.location.href = 'index.html';
@@ -97,10 +105,6 @@ async function loadInventoryTab() {
         if (inventoryData.length) {
             inventoryData.forEach(ing => {
                 const isLow = ing.stock_level < ing.low_stock_threshold;
-                const badge = ing.stock_level <= 0
-                    ? '<span class="badge badge-danger">Hết hàng</span>'
-                    : isLow ? '<span class="badge badge-warning">Sắp hết</span>'
-                    : '<span class="badge badge-success">An toàn</span>';
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${ing.ingredient_id}</td>
@@ -108,7 +112,6 @@ async function loadInventoryTab() {
                     <td style="font-weight:600;${isLow ? 'color:var(--red);' : ''}">${ing.stock_level}</td>
                     <td>${ing.unit}</td>
                     <td>${ing.low_stock_threshold}</td>
-                    <td>${badge}</td>
                     <td>
                         <button class="btn btn-secondary" style="padding:4px 8px;font-size:.75rem;" onclick="openAdjustmentModal(${ing.ingredient_id})">
                             <i class="fa-solid fa-sliders"></i> Điều chỉnh
@@ -225,9 +228,6 @@ function renderMenuTable(catId) {
                 <td>${formatVND(item.base_price)}</td>
                 <td>${availBadge}</td>
                 <td>
-                    <button class="btn btn-secondary" style="padding:4px 8px;font-size:.75rem;margin-right:2px;" onclick='openMenuItemModal(${JSON.stringify(item)}, ${cat.category_id})'>
-                        <i class="fa-solid fa-pen-to-square"></i>
-                    </button>
                     <button class="btn btn-secondary" style="padding:4px 8px;font-size:.75rem;" onclick="toggleMenuAvailability(${item.item_id}, '${item.item_name}', ${item.is_available})">
                         <i class="fa-solid fa-power-off"></i>
                     </button>
@@ -534,11 +534,7 @@ function setupEventListeners() {
     document.getElementById('cancelAddIngredientBtn').addEventListener('click', () => document.getElementById('addIngredientModal').classList.remove('show'));
     document.getElementById('saveAddIngredientBtn').addEventListener('click', saveNewIngredient);
 
-    // Menu
-    document.getElementById('openAddMenuItemBtn').addEventListener('click', () => openMenuItemModal());
-    document.getElementById('closeMenuItemModal').addEventListener('click', () => document.getElementById('menuItemModal').classList.remove('show'));
-    document.getElementById('cancelMenuItemBtn').addEventListener('click', () => document.getElementById('menuItemModal').classList.remove('show'));
-    document.getElementById('saveMenuItemBtn').addEventListener('click', saveMenuItem);
+    // Menu (manager: view + toggle only)
     document.getElementById('menuCategoryFilter').addEventListener('change', e => renderMenuTable(e.target.value));
 
     // Staff (manager)
@@ -568,7 +564,7 @@ function switchTab(tabId) {
     const titles = {
         'reports-tab':     'Báo cáo doanh thu',
         'inventory-tab':   'Quản lý kho hàng',
-        'menu-tab':        'Quản lý thực đơn',
+        'menu-tab':        'Thực đơn',
         'staff-tab':       'Quản lý nhân viên',
         'promotions-tab':  'Khuyến mãi chi nhánh',
         'loyalty-tab':     'Khách hàng thân thiết',

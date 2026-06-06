@@ -36,15 +36,14 @@ Tài liệu liên kết từng chức năng giao diện → endpoint API → tha
 | Tab Kho hàng | `loadInventoryTab()` | `GET inventory.php` | — | SELECT ingredients theo location |
 | Điều chỉnh tồn kho | `saveStockAdjustment()` | `POST inventory.php` | — | UPDATE ingredient.stock_level (add/reduce/set) |
 | Thêm nguyên liệu | `saveNewIngredient()` | `POST inventory.php (action=add_new)` | — | INSERT ingredient cho chi nhánh |
-| Tab Menu | `loadMenuTab()` | `GET menu.php?all=1` | — | SELECT toàn bộ món (kể cả is_available=0) |
-| Thêm/sửa món | `saveMenuItem()` | `POST menu.php` / `POST {_method:PUT}` | — | INSERT / UPDATE menu_item |
+| Tab Quản lý thực đơn | `loadMenuTab()` | `GET menu.php?all=1` | — | SELECT toàn bộ món (kể cả is_available=0) — view only |
 | Bật/tắt món | `toggleMenuAvailability()` | `POST menu.php {_method:DELETE}` | — | UPDATE menu_item.is_available (toggle) |
 | Tab Nhân viên | `loadStaffTab()` | `GET staff.php` | **UC11** — Staff roster (no Admin role) | SELECT staff role ≠ Admin theo chi nhánh |
 | Thêm/sửa nhân viên | `saveMgrStaff()` | `POST staff.php` / `POST {_method:PUT}` | — | INSERT / UPDATE staff |
 | Bật/tắt tài khoản | `toggleStaffActive()` | `POST staff.php {_method:DEACTIVATE}` | — | UPDATE staff.is_active (toggle) |
 | Reset mật khẩu | `resetStaffPin()` | `POST staff.php {_method:RESET_PIN}` | — | UPDATE staff.password_hash |
 | Tab Khuyến mãi | `loadPromotionsTab()` | `GET promotions.php` | **UC12** — Promotion (own branch + chain-wide) | SELECT promotion location_id=own OR IS NULL |
-| Tab Loyalty | `loadLoyaltyTab()` | `GET loyalty_balance.php?limit=50` | **UC4** — Top loyalty customers | SELECT v_customer_loyalty_balance ORDER BY points DESC |
+| Tab Loyalty | `loadLoyaltyTab()` | `GET loyalty_balance.php?limit=50` | **UC4** — Top loyalty customers | SELECT v_customer_loyalty_balance ORDER BY points DESC LIMIT 50 |
 | Đăng xuất | _(logout btn)_ | `GET auth.php?action=logout` | — | Huỷ session |
 
 ---
@@ -98,12 +97,18 @@ Tài liệu liên kết từng chức năng giao diện → endpoint API → tha
 | `POST prep_queue.php` | UPDATE order_status='Cancelled'; INSERT audit_log |
 
 ### Khách hàng & Loyalty
-| Endpoint | SQL |
-|---|---|
-| `GET customer_search.php?phone=X` | SELECT customer theo SĐT |
-| `POST customer_search.php` | INSERT customer mới |
-| `GET loyalty_balance.php?limit=N` | SELECT v_customer_loyalty_balance |
-| `PUT loyalty_balance.php?id=X` | UPDATE customer.loyalty_points |
+| Endpoint | Quyền | SQL |
+|---|---|---|
+| `GET customer_search.php?phone=X` | All | SELECT customer theo SĐT |
+| `POST customer_search.php` | All | INSERT customer mới |
+| `GET loyalty_balance.php?limit=N` | Admin, StoreManager | **UC4** — SELECT v_customer_loyalty_balance ORDER BY points DESC |
+| `GET loyalty_balance.php?phone=X` | All | **UC3** — SELECT customer + points_balance theo SĐT |
+| `PUT loyalty_balance.php?id=X` | Admin only | UPDATE customer.loyalty_points (admin override) |
+
+**Công thức Loyalty:**
+- Tích điểm: `floor(total_amount / 1000)` điểm/đơn → VD: 55.000đ = 55 điểm
+- Đổi điểm: 1 điểm = 1.000đ giảm giá
+- Nguồn dữ liệu: `v_customer_loyalty_balance` tính từ `loyalty_transaction` ledger (earn - redeem), không đọc `customer.loyalty_points` trực tiếp
 
 ### Menu
 | Endpoint | SQL |

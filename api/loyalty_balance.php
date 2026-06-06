@@ -13,10 +13,11 @@ require_once __DIR__ . '/db.php';
 
 // Authentication required
 require_login();
-require_role(['Admin']);
+require_role(['Admin', 'StoreManager']);
 
-// PUT — Admin adjusts a customer's points (inserts adjustment record)
+// PUT — Admin only adjusts a customer's points
 if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
+    require_role(['Admin']);
     $id   = isset($_GET['id']) ? (int)$_GET['id'] : 0;
     $body = json_decode(file_get_contents('php://input'), true);
     $new_points = isset($body['points_balance']) ? (int)$body['points_balance'] : -1;
