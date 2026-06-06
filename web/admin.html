@@ -385,7 +385,36 @@
         </div>
     </div>
 
+    <!-- Bottom nav (mobile) -->
+    <nav class="bottom-nav">
+        <div class="bottom-nav-items">
+            <button class="bottom-nav-btn active" data-target="reports-tab"><i class="fa-solid fa-chart-pie"></i>Báo cáo</button>
+            <button class="bottom-nav-btn" data-target="branches-tab"><i class="fa-solid fa-network-wired"></i>Chi nhánh</button>
+            <button class="bottom-nav-btn" data-target="staff-tab"><i class="fa-solid fa-users"></i>Nhân viên</button>
+            <button class="bottom-nav-btn" data-target="promotions-tab"><i class="fa-solid fa-tags"></i>Khuyến mãi</button>
+            <button class="bottom-nav-btn" data-target="order-history-tab"><i class="fa-solid fa-clock-rotate-left"></i>Đơn hàng</button>
+            <button class="bottom-nav-btn" data-target="loyalty-tab"><i class="fa-solid fa-award"></i>KH</button>
+            <button class="bottom-nav-btn" data-target="audit-log-tab"><i class="fa-solid fa-shield-halved"></i>Nhật ký</button>
+        </div>
+    </nav>
+
     <script src="js/api.js"></script>
     <script src="js/admin.js"></script>
+    <script>
+    document.querySelectorAll('.bottom-nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            switchTab(btn.dataset.target);
+            document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
+    });
+    // Sync bottom nav with sidebar clicks
+    document.querySelectorAll('.menu-item-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const t = btn.dataset.target;
+            document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.toggle('active', b.dataset.target === t));
+        });
+    });
+    </script>
 </body>
 </html>

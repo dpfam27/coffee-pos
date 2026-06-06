@@ -401,7 +401,42 @@
         </div>
     </div>
 
+    <!-- Bottom nav (mobile) -->
+    <nav class="bottom-nav">
+        <div class="bottom-nav-items">
+            <button class="bottom-nav-btn active" data-target="new-order-tab"><i class="fa-solid fa-cart-plus"></i>Đơn hàng</button>
+            <button class="bottom-nav-btn" data-target="history-tab"><i class="fa-solid fa-clock-rotate-left"></i>Lịch sử</button>
+            <button class="bottom-nav-btn" id="cancelTabBtnBottom" data-target="cancel-tab" style="display:none"><i class="fa-solid fa-ban"></i>Hủy đơn</button>
+        </div>
+    </nav>
+
     <script src="js/api.js"></script>
     <script src="js/pos.js"></script>
+    <script>
+    document.querySelectorAll('.bottom-nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (!btn.dataset.target) return;
+            switchTab(btn.dataset.target);
+            document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
+    });
+    document.querySelectorAll('.menu-item-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const t = btn.dataset.target;
+            document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.toggle('active', b.dataset.target === t));
+        });
+    });
+    // Show cancel tab button when SM unlocks it
+    const _cancelMenu = document.getElementById('cancelOrderMenu');
+    if (_cancelMenu) {
+        const obs = new MutationObserver(() => {
+            const visible = _cancelMenu.style.display !== 'none';
+            const b = document.getElementById('cancelTabBtnBottom');
+            if (b) b.style.display = visible ? '' : 'none';
+        });
+        obs.observe(_cancelMenu, { attributes: true, attributeFilter: ['style'] });
+    }
+    </script>
 </body>
 </html>

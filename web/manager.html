@@ -325,7 +325,34 @@
         </div>
     </div>
 
+    <!-- Bottom nav (mobile) -->
+    <nav class="bottom-nav">
+        <div class="bottom-nav-items">
+            <button class="bottom-nav-btn active" data-target="reports-tab"><i class="fa-solid fa-chart-pie"></i>Báo cáo</button>
+            <button class="bottom-nav-btn" data-target="inventory-tab"><i class="fa-solid fa-warehouse"></i>Kho hàng</button>
+            <button class="bottom-nav-btn" data-target="menu-tab"><i class="fa-solid fa-utensils"></i>Thực đơn</button>
+            <button class="bottom-nav-btn" data-target="staff-tab"><i class="fa-solid fa-users"></i>Nhân viên</button>
+            <button class="bottom-nav-btn" data-target="promotions-tab"><i class="fa-solid fa-tags"></i>KM</button>
+            <button class="bottom-nav-btn" data-target="loyalty-tab"><i class="fa-solid fa-award"></i>KH</button>
+        </div>
+    </nav>
+
     <script src="js/api.js"></script>
     <script src="js/manager.js"></script>
+    <script>
+    document.querySelectorAll('.bottom-nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            switchTab(btn.dataset.target);
+            document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
+    });
+    document.querySelectorAll('.menu-item-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const t = btn.dataset.target;
+            document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.toggle('active', b.dataset.target === t));
+        });
+    });
+    </script>
 </body>
 </html>
