@@ -170,6 +170,52 @@ Tài liệu liên kết từng chức năng giao diện → endpoint API → tha
 
 ---
 
+## 5. ERD Bảng → Use Case Query
+
+Map từng bảng trong ERD sang các UC query sử dụng bảng đó (tra nhanh khi thầy hỏi "bảng X dùng ở đâu").
+
+| Bảng (ERD) | Cột chính | Liên kết FK | Xuất hiện trong UC |
+|---|---|---|---|
+| **location** | location_id, name, address, phone, cancel_pin | ← staff, orders, ingredient, promotion | UC7 (revenue by branch), UC8 (chain overview), UC9 (cancel_pin), UC11 (staff roster), UC12 (promotion scope) |
+| **staff** | staff_id, location_id, name, role, phone, is_active, password_hash | → location | UC9 (audit_log staff_id), UC10 (staff_name in order history), UC11 (staff roster), UC13 (audit_log) |
+| **audit_log** | log_id, staff_id, action_type, table_affected, record_id, action_timestamp, details | → staff | **UC13** — SELECT log + staff.name + location.name ORDER BY timestamp DESC LIMIT 100 |
+| **customer** | customer_id, name, email, phone, loyalty_points | ← orders, loyalty_transaction | UC3 (lookup by phone), UC4 (top loyalty), UC10 (customer_name in order history) |
+| **orders** | order_id, location_id, staff_id, customer_id, order_type, order_date, order_status, total_amount | → location, staff, customer | UC1, UC5, UC6a/b/c, UC7, UC8, UC9, UC10 |
+| **order_item** | order_item_id, order_id, item_id, quantity, unit_price, subtotal | → orders, menu_item | UC1 (prep queue items), UC5 (revenue by item), **UTILITY** order detail |
+| **order_item_modifier** | oi_modifier_id, order_item_id, option_id, price_delta_at_sale | → order_item, modifier_option | UC1 (customizations), **UTILITY** order detail (GROUP_CONCAT option_name) |
+| **menu_item** | item_id, category_id, item_name, base_price, is_available | → menu_category | UC1, UC5 (item_name + revenue), **UTILITY** order detail |
+| **menu_category** | category_id, category_name | ← menu_item | — (join ngầm qua menu_item) |
+| **modifier_group** | group_id, group_name, selection_type, is_required | ← modifier_option, menu_item_modifier | UC1 (GROUP BY group_name cho customizations) |
+| **modifier_option** | option_id, group_id, option_name, price_delta | → modifier_group | UC1, **UTILITY** order detail (option_name), modifier_revenue |
+| **menu_item_modifier** | item_modifier_id, item_id, group_id | → menu_item, modifier_group | Junction table — dùng khi load menu để biết modifier nào áp cho món nào |
+| **payment** | payment_id, order_id, payment_method, amount_paid, payment_time | → orders | **UTILITY** order detail (payment_method) |
+| **promotion** | promotion_id, name, discount_type, discount_value, start_date, end_date, is_active, location_id | → location (nullable) | UC2 (active promo at POS), UC12 (promotion management) |
+| **order_promotion** | order_promotion_id, order_id, promotion_id, amount_discounted | → orders, promotion | **UTILITY** order detail (promo_discount = SUM(amount_discounted)) |
+| **loyalty_transaction** | loyalty_txn_id, customer_id, order_id, points_change, txn_type, created_at | → customer, orders | UC3/UC4 (via VIEW v_customer_loyalty_balance), tạo khi checkout |
+| **ingredient** | ingredient_id, location_id, name, stock_level, unit, low_stock_threshold | → location | UC8 (low_stock_count chain), **UTILITY Low-stock** (stock_level < threshold) |
+| **v_customer_loyalty_balance** _(VIEW)_ | customer_id, name, phone, points_balance | — | UC3, UC4 — tính SUM(earn) - SUM(redeem) từ loyalty_transaction |
+
+### Quan hệ chính cần nhớ
+
+```
+location ──< staff ──< orders >── customer
+                         │
+                    order_item >── menu_item >── menu_category
+                         │              │
+               order_item_modifier    menu_item_modifier
+                         │
+                   modifier_option >── modifier_group
+
+orders >── payment
+orders >── order_promotion >── promotion
+orders >── loyalty_transaction >── customer
+
+location ──< ingredient
+staff ──< audit_log
+```
+
+---
+
 ## 5. Lưu ý kiến trúc
 
 | Điểm | Mô tả |
