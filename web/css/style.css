@@ -1084,6 +1084,44 @@ select.form-control {
 .prep-item-modifiers { font-size: 11px; color: var(--t3); padding-left: 10px; }
 
 /* ============================================================
+   PREVIEW TOOLBAR (desktop only — switch mobile/desktop view)
+   ============================================================ */
+.preview-toolbar {
+  position: fixed;
+  top: 12px; left: 50%; transform: translateX(-50%);
+  z-index: 9999;
+  background: #1a1815;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 99px;
+  padding: 5px 8px;
+  display: flex; align-items: center; gap: 4px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.6);
+  user-select: none;
+}
+.preview-toolbar-label {
+  font-size: 11px; color: #5a5248; font-weight: 600;
+  padding: 0 6px; letter-spacing: .04em; text-transform: uppercase;
+}
+.ptb-btn {
+  padding: 5px 14px; border-radius: 99px; border: none; cursor: pointer;
+  font-size: 12px; font-weight: 600; transition: all .15s;
+  background: transparent; color: #9a8f82;
+}
+.ptb-btn.active { background: #4ade80; color: #0a0908; }
+.ptb-btn.active.mobile-btn { background: #4ade80; }
+.ptb-btn.active.desktop-btn { background: #4ade80; }
+.ptb-btn-reset {
+  padding: 5px 12px; border-radius: 99px; border: none; cursor: pointer;
+  font-size: 12px; font-weight: 600; background: transparent;
+  color: #ef4444; transition: color .15s;
+}
+.ptb-btn-reset:hover { color: #fca5a5; }
+
+/* When preview-mobile class is on <html> — simulate 390px */
+html.preview-mobile body { max-width: 390px; margin: 0 auto; box-shadow: 0 0 0 9999px #000; }
+html.preview-mobile .preview-toolbar { top: auto; bottom: 70px; }
+
+/* ============================================================
    BOTTOM NAV BAR (mobile only)
    ============================================================ */
 .bottom-nav {
