@@ -1,47 +1,38 @@
-// Preview toolbar — switch between mobile (390px) and desktop view
+// Preview toolbar — switch mobile/desktop by reloading with ?preview=mobile
 (function () {
+    const params = new URLSearchParams(location.search);
+    const isMobile = params.get('preview') === 'mobile';
+
+    // Inject/update viewport meta
+    let vp = document.querySelector('meta[name="viewport"]');
+    if (!vp) { vp = document.createElement('meta'); vp.name = 'viewport'; document.head.appendChild(vp); }
+    vp.content = isMobile
+        ? 'width=390, initial-scale=1'
+        : 'width=device-width, initial-scale=1';
+
+    // Build toolbar
     const toolbar = document.createElement('div');
     toolbar.className = 'preview-toolbar';
     toolbar.innerHTML = `
         <span class="preview-toolbar-label">View</span>
-        <button class="ptb-btn desktop-btn active" id="ptbDesktop">
+        <button class="ptb-btn desktop-btn${!isMobile ? ' active' : ''}" id="ptbDesktop">
             <i class="fa-solid fa-display"></i> Desktop
         </button>
-        <button class="ptb-btn mobile-btn" id="ptbMobile">
+        <button class="ptb-btn mobile-btn${isMobile ? ' active' : ''}" id="ptbMobile">
             <i class="fa-solid fa-mobile-screen"></i> Mobile
         </button>
         <button class="ptb-btn-reset" id="ptbReset">Reset</button>
     `;
     document.body.appendChild(toolbar);
 
-    const html = document.documentElement;
-    const btnD = document.getElementById('ptbDesktop');
-    const btnM = document.getElementById('ptbMobile');
-    const btnR = document.getElementById('ptbReset');
-
-    function setDesktop() {
-        html.classList.remove('preview-mobile');
-        btnD.classList.add('active');
-        btnM.classList.remove('active');
-        localStorage.setItem('previewMode', 'desktop');
+    function goTo(mode) {
+        const u = new URL(location.href);
+        if (mode === 'mobile') u.searchParams.set('preview', 'mobile');
+        else u.searchParams.delete('preview');
+        location.replace(u.toString());
     }
 
-    function setMobile() {
-        html.classList.add('preview-mobile');
-        btnM.classList.add('active');
-        btnD.classList.remove('active');
-        localStorage.setItem('previewMode', 'mobile');
-    }
-
-    function reset() {
-        setDesktop();
-        localStorage.removeItem('previewMode');
-    }
-
-    btnD.addEventListener('click', setDesktop);
-    btnM.addEventListener('click', setMobile);
-    btnR.addEventListener('click', reset);
-
-    // Restore last mode
-    if (localStorage.getItem('previewMode') === 'mobile') setMobile();
+    document.getElementById('ptbDesktop').addEventListener('click', () => goTo('desktop'));
+    document.getElementById('ptbMobile').addEventListener('click', () => goTo('mobile'));
+    document.getElementById('ptbReset').addEventListener('click', () => goTo('desktop'));
 })();

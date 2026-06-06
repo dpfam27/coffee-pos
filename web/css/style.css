@@ -1117,9 +1117,6 @@ select.form-control {
 }
 .ptb-btn-reset:hover { color: #fca5a5; }
 
-/* When preview-mobile class is on <html> — simulate 390px */
-html.preview-mobile body { max-width: 390px; margin: 0 auto; box-shadow: 0 0 0 9999px #000; }
-html.preview-mobile .preview-toolbar { top: auto; bottom: 70px; }
 
 /* ============================================================
    BOTTOM NAV BAR (mobile only)
